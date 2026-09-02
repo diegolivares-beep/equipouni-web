@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comunicaciones</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Comunicaciones">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">Comunicaciones</h1>
+    <p class="angosto">Los correos salen por lote y según el estado de cada postulación.
+    Cambiar estados y enviar correos son acciones separadas a propósito: primero se
+    revisa el lote completo, después se envía.</p>
+
+    <div class="acciones-lote" style="margin-top:1.4rem">
+      <label>Oportunidad
+        <select id="sel-oportunidad"><option value="">Elige una</option></select>
+      </label>
+    </div>
+
+    <div id="lotes"></div>
+  </div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/clusters.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+EU.admin.montar();
+(function () {
+  'use strict';
+  var esc = EU.util.esc;
+  var sel = document.getElementById('sel-oportunidad');
+  var zona = document.getElementById('lotes');
+
+  EU.datos.oportunidades.forEach(function (o) {
+    if (!EU.datos.postulacionesA(o.id).length) return;
+    var op = document.createElement('option');
+    op.value = o.id;
+    op.textContent = o.nombre + ' (' + EU.datos.postulacionesA(o.id).length + ' postulaciones)';
+    sel.appendChild(op);
+  });
+
+  /* Plantilla del correo según el estado. Con los datos reales de la
+     oportunidad: monto, plazo y fechas, nunca texto genérico. */
+  function plantilla(estado, o) {
+    if (estado === 'seleccionado') {
+      return 'Asunto: Quedaste seleccionado en ' + o.nombre + '\n\n' +
+        'Tu emprendimiento tiene un cupo en ' + o.nombre + ' (' +
+        EU.util.rangoFechas(o.fechaInicio, o.fechaTermino) + ', ' +
+        EU.territorio.nombreComuna(o.comuna) + ').\n' +
+        'Valor de participación: ' + EU.util.pesos(o.valor) + '.\n' +
+        'Plazo de pago: ' + (o.plazoPago || 'ver bases') + '.\n' +
+        'Al transferir, responde este correo con el comprobante para confirmar tu cupo.';
+    }
+    if (estado === 'confirmado') {
+      return 'Asunto: Participación confirmada en ' + o.nombre + '\n\n' +
+        'Recibimos y validamos tu pago. Tu cupo está confirmado.\n' +
+        'Lugar: ' + o.direccion + ', ' + EU.territorio.nombreComuna(o.comuna) + '.\n' +
+        'Horario: ' + (o.horario || 'por confirmar') + '. ' +
+        (o.asistencia ? 'Asistencia: ' + o.asistencia : '');
+    }
+    return 'Asunto: Resultado de tu postulación a ' + o.nombre + '\n\n' +
+      'El proceso de selección cerró y esta vez tu emprendimiento no quedó con cupo.\n' +
+      'Tu ficha queda vigente para las próximas oportunidades, y si se libera un cupo ' +
+      'y aceptaste ser contactado, te vamos a escribir.';
+  }
+
+  function render() {
+    var o = sel.value ? EU.repo.oportunidades.obtener(sel.value) : null;
+    if (!o) { zona.innerHTML = ''; return; }
+
+    var posts = EU.datos.postulacionesA(o.id);
+    var lotes = [
+      { estado: 'seleccionado', titulo: 'Seleccionados: instrucciones de pago' },
+      { estado: 'confirmado', titulo: 'Confirmados: información final' },
+      { estado: 'postulado', titulo: 'Postulados: resultado al cerrar la selección' }
+    ];
+
+    zona.innerHTML = lotes.map(function (l) {
+      var del = posts.filter(function (p) { return p.estado === l.estado; });
+      var nombres = del.map(function (p) {
+        var fi = EU.datos.emprendedor(p.emprendedor);
+        return fi ? fi.emprendimiento.nombre + ' (' + fi.representante.correo + ')' : p.emprendedor;
+      });
+
+      var advertencia = '';
+      if (l.estado === 'postulado' && EU.estados.recibePostulaciones(o)) {
+        advertencia = '<p class="aviso-categoria">La postulación sigue abierta: este lote ' +
+          'se envía recién cuando cierre la selección, o le estarías diciendo "no quedaste" ' +
+          'a gente que aún puede quedar.</p>';
+      }
+
+      return '<section class="control-seccion">' +
+        '<h2 style="font-size:1.2rem">' + esc(l.titulo) + ' · ' + del.length + ' destinatario(s)</h2>' +
+        (del.length
+          ? advertencia +
+            '<p style="font-size:.9rem;color:var(--tinta-2)">' + esc(nombres.join(' · ')) + '</p>' +
+            '<pre class="vista-correo">' + esc(plantilla(l.estado, o)) + '</pre>' +
+            '<p class="acciones">' +
+              '<button type="button" class="boton" data-enviar="' + l.estado + '">Enviar este lote</button>' +
+            '</p>'
+          : '<p style="font-size:.9rem;color:var(--tinta-2)">Nadie en este estado.</p>') +
+      '</section>';
+    }).join('') +
+    '<p id="mensaje" class="mensaje-form" role="status" aria-live="polite"></p>';
+  }
+
+  sel.addEventListener('change', render);
+
+  document.getElementById('lotes').addEventListener('click', function (e) {
+    if (!e.target.hasAttribute('data-enviar')) return;
+    document.getElementById('mensaje').textContent =
+      'Lote revisado y listo. En la versión final, acá saldrían los correos y quedaría ' +
+      'registrada la fecha de envío de cada uno.';
+  });
+})();
+</script>
+</body>
+</html>

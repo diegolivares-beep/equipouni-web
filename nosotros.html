@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nosotros</title>
+<meta name="description" content="Qué es esta red, cómo opera, cuáles son sus límites y cómo contactarla.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Nosotros">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido">
+
+  <section class="bloque">
+    <div class="envoltura">
+      <h1>Nosotros</h1>
+      <p class="angosto" id="texto-que-es"></p>
+      <p class="angosto">La red general es de acceso gratuito para el emprendedor.
+      El proyecto se sostiene con el cargo comercial a las productoras que contratan
+      la gestión de sus convocatorias y con las actividades de sus propias unidades
+      internas.</p>
+    </div>
+  </section>
+
+  <section class="bloque bloque--arena" aria-labelledby="t-limites">
+    <div class="envoltura">
+      <div class="encabezado-bloque">
+        <h2 id="t-limites">Reglas de la casa</h2>
+        <p>Los límites que hacen que esto funcione</p>
+      </div>
+      <ul class="lista-datos" id="lista-limites"></ul>
+    </div>
+  </section>
+
+  <section class="bloque" aria-labelledby="t-faq">
+    <div class="envoltura">
+      <div class="encabezado-bloque">
+        <h2 id="t-faq">Preguntas frecuentes</h2>
+      </div>
+      <div class="preguntas">
+        <details>
+          <summary>¿Quiénes pueden crear una ficha?</summary>
+          <p>Cualquier emprendimiento que venda productos o servicios y tenga un
+          representante mayor de 18 años. La formalización no es requisito para crear
+          la ficha; cada oportunidad define qué exige.</p>
+        </details>
+        <details>
+          <summary>¿Cómo se financia la plataforma si para mí es gratis?</summary>
+          <p>Con el cargo comercial que pagan las productoras por la gestión de sus
+          convocatorias. Por eso podemos mantener el acceso gratuito del lado del
+          emprendedor.</p>
+        </details>
+        <details>
+          <summary>¿Qué hacen con mis datos?</summary>
+          <p>Tu ficha se comparte solamente con quienes organizan las oportunidades a
+          las que postulas, y para eso pedimos tu autorización al crearla. No pedimos
+          datos bancarios en la ficha.</p>
+        </details>
+        <details>
+          <summary>¿Operan fuera de la Región de Coquimbo?</summary>
+          <p>Hoy la operación parte en la Región de Coquimbo. La plataforma está
+          construida para sumar regiones, así que el territorio va a crecer con la
+          red.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque bloque--tinta" aria-labelledby="t-contacto">
+    <div class="envoltura">
+      <h2 id="t-contacto">Contacto</h2>
+      <p class="angosto">Para dudas de emprendedores, solicitudes de productoras o
+      cualquier otro tema.</p>
+      <p class="acciones">
+        <a class="boton boton--claro" id="correo-contacto" href="#">Escribir por correo</a>
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script>
+EU.ui.montarEsqueleto();
+
+/* Los textos institucionales viven en config/marca.js, para que la
+   definición del proyecto tenga una sola fuente. */
+(function () {
+  document.getElementById('texto-que-es').textContent = EU.marca.institucional.queEs;
+  document.getElementById('lista-limites').innerHTML =
+    EU.marca.institucional.limites.map(function (l, i) {
+      return '<li><b>' + (i + 1) + '</b><span>' + EU.util.esc(l) + '</span></li>';
+    }).join('');
+  document.getElementById('correo-contacto').href = 'mailto:' + EU.marca.contacto.correo;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel general</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Panel general">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <h1>Panel general</h1>
+    <div class="resumen-grilla" id="resumen"></div>
+
+    <section class="control-seccion">
+      <h2 style="font-size:1.35rem">Oportunidades con postulaciones abiertas</h2>
+      <div class="tabla-envoltura">
+        <table class="tabla" id="tabla-abiertas">
+          <thead><tr>
+            <th>Oportunidad</th><th>Cierre</th><th class="num">Cupos</th>
+            <th class="num">Postulaciones</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/clusters.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+EU.admin.montar();
+(function () {
+  'use strict';
+  var esc = EU.util.esc;
+
+  var abiertas = EU.repo.oportunidades.listar({});
+  var pendientes = EU.datos.emprendedores.filter(function (f) {
+    return f.estado === 'pendiente' || f.estado === 'correccion';
+  });
+  var porEstado = { postulado: 0, seleccionado: 0, confirmado: 0 };
+  EU.datos.postulaciones.forEach(function (p) {
+    if (porEstado[p.estado] !== undefined) porEstado[p.estado] += 1;
+  });
+
+  document.getElementById('resumen').innerHTML = [
+    { t: 'Recibiendo postulaciones', v: abiertas.length + ' oportunidad(es)',
+      e: 'admin-oportunidades.html', a: 'Ver oportunidades' },
+    { t: 'Por revisar', v: porEstado.postulado + ' postulación(es) en "Postulado"',
+      e: 'admin-oportunidades.html', a: 'Ir a postulantes' },
+    { t: 'Esperando pago', v: porEstado.seleccionado + ' seleccionado(s)',
+      e: 'admin-comunicaciones.html', a: 'Preparar comunicaciones' },
+    { t: 'Fichas por validar', v: pendientes.length + ' ficha(s)',
+      e: 'admin-validaciones.html', a: 'Ir a validaciones' }
+  ].map(function (t) {
+    return '<div class="tarjeta-resumen"><h2>' + esc(t.t) + '</h2>' +
+      '<p class="tarjeta-resumen__valor">' + esc(t.v) + '</p>' +
+      '<a href="' + t.e + '">' + esc(t.a) + '</a></div>';
+  }).join('');
+
+  document.querySelector('#tabla-abiertas tbody').innerHTML = abiertas.map(function (o) {
+    var posts = EU.datos.postulacionesA(o.id);
+    return '<tr>' +
+      '<td><strong>' + esc(o.nombre) + '</strong>' +
+        '<small>' + esc(EU.territorio.nombreComuna(o.comuna)) + ' · ' +
+        EU.util.rangoFechas(o.fechaInicio, o.fechaTermino) + '</small></td>' +
+      '<td>' + EU.util.dia(o.cierrePostulacion) +
+        '<small>' + esc(EU.util.textoPlazo(o.cierrePostulacion)) + '</small></td>' +
+      '<td class="num">' + o.cuposDisponibles + ' de ' + o.cupos + '</td>' +
+      '<td class="num">' + posts.length + '</td>' +
+      '<td><a href="admin-postulantes.html?id=' + encodeURIComponent(o.id) + '">Ver postulantes</a></td>' +
+    '</tr>';
+  }).join('');
+})();
+</script>
+</body>
+</html>

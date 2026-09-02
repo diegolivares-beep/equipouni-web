@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi ficha</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Mi ficha">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <h1>Mi ficha</h1>
+    <p id="estado-ficha" style="margin-bottom:1.2rem"></p>
+    <p class="angosto">Esta es la información que ven quienes organizan las oportunidades
+    a las que postulas. Si cambias un dato ya validado, solo esa sección vuelve a
+    revisión; el resto de tu ficha sigue vigente.</p>
+
+    <div id="observaciones"></div>
+
+    <form class="formulario" id="form-ficha" novalidate style="max-width:720px">
+
+      <fieldset data-seccion="representante">
+        <legend>Quién representa <span data-estado-seccion="representante"></span></legend>
+        <div class="campo campo--fila">
+          <div>
+            <label for="rep-nombre">Nombre completo</label>
+            <input type="text" id="rep-nombre" name="rep-nombre" required autocomplete="name">
+          </div>
+          <div>
+            <label for="rep-rut">RUT
+              <span class="pista">Evita cuentas duplicadas de la misma persona.</span>
+            </label>
+            <input type="text" id="rep-rut" name="rep-rut" required>
+          </div>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="rep-correo">Correo</label>
+            <input type="email" id="rep-correo" name="rep-correo" required autocomplete="email">
+          </div>
+          <div>
+            <label for="rep-telefono">Teléfono</label>
+            <input type="tel" id="rep-telefono" name="rep-telefono" required autocomplete="tel">
+          </div>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="rep-comuna">Comuna donde vives</label>
+            <select id="rep-comuna" name="rep-comuna" required></select>
+          </div>
+          <div>
+            <label for="rep-contacto">Cómo prefieres que te contactemos</label>
+            <select id="rep-contacto" name="rep-contacto" required>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="correo">Correo</option>
+              <option value="telefono">Llamada</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset data-seccion="emprendimiento">
+        <legend>El emprendimiento <span data-estado-seccion="emprendimiento"></span></legend>
+        <div class="campo campo--fila">
+          <div>
+            <label for="emp-nombre">Nombre del emprendimiento</label>
+            <input type="text" id="emp-nombre" name="emp-nombre" required>
+          </div>
+          <div>
+            <label for="emp-ano">Año en que partió</label>
+            <input type="number" id="emp-ano" name="emp-ano" min="1980" max="2026" required>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="emp-comuna">Comuna donde produces</label>
+          <select id="emp-comuna" name="emp-comuna" required></select>
+        </div>
+        <div class="campo">
+          <label for="emp-descripcion">Descripción
+            <span class="pista">Dos o tres líneas. Es lo primero que lee quien organiza.</span>
+          </label>
+          <textarea id="emp-descripcion" name="emp-descripcion" required maxlength="400"></textarea>
+        </div>
+        <div class="campo">
+          <label for="emp-instagram">Instagram, Facebook o web</label>
+          <input type="url" id="emp-instagram" name="emp-instagram" inputmode="url">
+        </div>
+      </fieldset>
+
+      <fieldset data-seccion="clasificacion">
+        <legend>Qué vendes <span data-estado-seccion="clasificacion"></span></legend>
+        <div class="campo campo--fila">
+          <div>
+            <label for="cla-rubro">Rubro principal</label>
+            <select id="cla-rubro" name="cla-rubro" required>
+              <option value="">Elige uno</option>
+            </select>
+          </div>
+          <div>
+            <label for="cla-subrubro">Subrubro
+              <span class="pista">Cambia según el rubro que elijas.</span>
+            </label>
+            <select id="cla-subrubro" name="cla-subrubro">
+              <option value="">Elige uno</option>
+            </select>
+          </div>
+        </div>
+        <div class="campo" id="campo-otro" hidden>
+          <label for="cla-otro">Cuéntanos qué vendes
+            <span class="pista">Al marcar "Otro", una persona del equipo revisa tu caso.</span>
+          </label>
+          <input type="text" id="cla-otro" name="cla-otro" maxlength="120">
+        </div>
+        <div id="zona-tipos"></div>
+        <div id="aviso-rubro"></div>
+      </fieldset>
+
+      <fieldset data-seccion="productos">
+        <legend>Tus productos <span data-estado-seccion="productos"></span></legend>
+        <div class="campo">
+          <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem">Fotografías actuales</span>
+          <div class="fotos-ficha" id="fotos-actuales"></div>
+          <p class="pista">En la versión final acá se suben y reemplazan fotografías.</p>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="pro-personaliza">¿Haces productos personalizados?</label>
+            <select id="pro-personaliza" name="pro-personaliza">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+          </div>
+          <div id="campo-personaliza" hidden>
+            <label for="pro-detalle">Cómo funciona el pedido</label>
+            <input type="text" id="pro-detalle" name="pro-detalle" maxlength="160">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset data-seccion="formalizacion">
+        <legend>Formalización <span data-estado-seccion="formalizacion"></span></legend>
+        <p class="pista" style="margin-bottom:.8rem">Marca lo que ya tienes. Nada de esto
+        es obligatorio para crear la ficha; cada oportunidad define qué exige.</p>
+        <label class="casilla"><input type="checkbox" name="for-inicioActividades"><span>Inicio de actividades en el SII</span></label>
+        <label class="casilla"><input type="checkbox" name="for-boleta"><span>Emites boleta</span></label>
+        <label class="casilla"><input type="checkbox" name="for-patente"><span>Patente comercial</span></label>
+        <label class="casilla"><input type="checkbox" name="for-resolucionSanitaria"><span>Resolución sanitaria</span></label>
+        <label class="casilla"><input type="checkbox" name="for-personalidadJuridica"><span>Personalidad jurídica</span></label>
+        <p class="pista">En la versión final, cada documento marcado pide su archivo de respaldo.</p>
+      </fieldset>
+
+      <p><button class="boton boton--grande" type="submit">Guardar cambios</button></p>
+      <p id="mensaje-form" class="mensaje-form" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/cuenta.js"></script>
+<script>EU.cuenta.montar();</script>
+<script src="assets/js/ficha.js"></script>
+</body>
+</html>

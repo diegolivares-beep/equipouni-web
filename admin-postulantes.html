@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Postulantes</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Postulantes">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura" id="pantalla"></div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/clusters.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+EU.admin.montar();
+
+/* Pantalla administrativa de una oportunidad: postulantes agrupados por
+   clúster, filtros, acciones masivas con transiciones validadas, y la
+   ficha de cada postulante desplegable en su fila. */
+(function () {
+  'use strict';
+  var esc = EU.util.esc;
+  var pantalla = document.getElementById('pantalla');
+  var id = EU.util.parametro('id');
+  var o = id ? EU.repo.oportunidades.obtener(id) : null;
+
+  if (!o) {
+    pantalla.innerHTML = '<h1>Elige una oportunidad</h1>' +
+      '<p><a class="boton" href="admin-oportunidades.html">Ver las oportunidades</a></p>';
+    return;
+  }
+
+  EU.util.parametro('id');
+  document.title = 'Postulantes de ' + o.nombre + ' | Panel ' + EU.marca.nombre;
+
+  var filtros = { cluster: '', rubro: '', estado: '', respuesta: '' };
+  var mensajeLote = '';
+
+  function datos() { return EU.clusters.deOportunidad(o.id); }
+
+  function filtrar(lista) {
+    return lista.filter(function (x) {
+      if (filtros.cluster && x.cluster !== filtros.cluster) return false;
+      if (filtros.rubro && x.ficha.clasificacion.rubro !== filtros.rubro) return false;
+      if (filtros.estado && x.postulacion.estado !== filtros.estado) return false;
+      if (filtros.respuesta === 'reemplazo-si' &&
+          (x.postulacion.respuestas || {}).reemplazo !== 'Sí') return false;
+      return true;
+    });
+  }
+
+  function render() {
+    var todas = datos();
+    var vistas = filtrar(todas);
+
+    var porEstado = {};
+    todas.forEach(function (x) {
+      porEstado[x.postulacion.estado] = (porEstado[x.postulacion.estado] || 0) + 1;
+    });
+
+    var filas = vistas.map(function (x) {
+      var p = x.postulacion, f = x.ficha;
+      var respuestas = Object.keys(p.respuestas || {}).map(function (rid) {
+        var pregunta = null;
+        (o.preguntas || []).forEach(function (q) { if (q.id === rid) pregunta = q; });
+        var v = p.respuestas[rid];
+        if (Array.isArray(v)) v = v.join(', ');
+        return '<div><dt>' + esc(pregunta ? pregunta.texto : rid) + '</dt><dd>' +
+               esc(v) + '</dd></div>';
+      }).join('');
+
+      return '<tr>' +
+        '<td><input type="checkbox" name="sel" value="' + esc(p.id) + '" aria-label="Seleccionar ' +
+          esc(f.emprendimiento.nombre) + '"></td>' +
+        '<td><strong>' + esc(f.emprendimiento.nombre) + '</strong>' +
+          '<small>' + esc(EU.admin.clasificacionCorta(f)) + ' · ' +
+          esc(EU.territorio.nombreComuna(f.emprendimiento.comuna)) + '</small></td>' +
+        '<td>' + EU.admin.etiquetaCluster(x.cluster) +
+          '<small>' + esc(x.razon) + '</small></td>' +
+        '<td>' + esc(EU.estados.etiqueta('postulacion', p.estado)) +
+          '<small>' + EU.util.dia(p.fecha) + '</small></td>' +
+        '<td><button type="button" class="enlace-boton" data-abrir="' + esc(p.id) + '"' +
+          ' aria-expanded="false">Ver ficha</button></td>' +
+      '</tr>' +
+      '<tr class="fila-detalle" data-detalle="' + esc(p.id) + '" hidden><td colspan="5">' +
+        EU.admin.fichaCompleta(f) +
+        (respuestas ? '<h4 style="margin-top:1rem">Respuestas a esta oportunidad</h4>' +
+          '<dl class="datos">' + respuestas + '</dl>' : '') +
+      '</td></tr>';
+    }).join('');
+
+    pantalla.innerHTML =
+      '<p class="migas"><a href="admin-oportunidades.html">Oportunidades</a> / ' + esc(o.nombre) + '</p>' +
+      '<div class="encabezado-bloque">' +
+        '<h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">' + esc(o.nombre) + '</h1>' +
+        '<p>' + todas.length + ' postulaciones · ' + o.cupos + ' cupos · cierre ' +
+          EU.util.dia(o.cierrePostulacion) + '</p>' +
+      '</div>' +
+
+      '<form id="filtros" class="acciones-lote" style="margin-top:0">' +
+        '<label>Clúster <select name="cluster"><option value="">Todos</option>' +
+          Object.keys(EU.estados.clusterInfo).map(function (c) {
+            return '<option value="' + c + '"' + (filtros.cluster === c ? ' selected' : '') + '>' +
+              esc(EU.estados.clusterInfo[c].etiqueta) + '</option>';
+          }).join('') + '</select></label>' +
+        '<label>Rubro <select name="rubro"><option value="">Todos</option>' +
+          EU.catalogo.rubros.map(function (r) {
+            return '<option value="' + r.id + '"' + (filtros.rubro === r.id ? ' selected' : '') + '>' +
+              esc(r.nombre) + '</option>';
+          }).join('') + '</select></label>' +
+        '<label>Estado <select name="estado"><option value="">Todos</option>' +
+          Object.keys(EU.estados.postulacionInfo).map(function (s) {
+            return '<option value="' + s + '"' + (filtros.estado === s ? ' selected' : '') + '>' +
+              esc(EU.estados.etiqueta('postulacion', s)) + '</option>';
+          }).join('') + '</select></label>' +
+        '<label>Respuesta <select name="respuesta">' +
+          '<option value="">Todas</option>' +
+          '<option value="reemplazo-si"' + (filtros.respuesta === 'reemplazo-si' ? ' selected' : '') +
+            '>Acepta reemplazo</option>' +
+        '</select></label>' +
+        '<span class="resumen-filtros">' + vistas.length + ' de ' + todas.length + '</span>' +
+      '</form>' +
+
+      '<div class="acciones-lote">' +
+        '<strong style="font-size:.85rem">Con las filas marcadas:</strong>' +
+        '<select id="accion-lote">' +
+          '<option value="">Elegir acción</option>' +
+          '<option value="seleccionado">Pasar a Seleccionado</option>' +
+          '<option value="confirmado">Pasar a Confirmado</option>' +
+          '<option value="renuncio">Registrar renuncia</option>' +
+        '</select>' +
+        '<button type="button" class="boton" id="aplicar-lote">Aplicar</button>' +
+        '<span class="resumen-filtros">Los correos se envían aparte, en Comunicaciones.</span>' +
+      '</div>' +
+      '<p id="mensaje-lote" class="mensaje-form" role="status" aria-live="polite">' +
+        esc(mensajeLote) + '</p>' +
+
+      '<div class="tabla-envoltura"><table class="tabla">' +
+        '<thead><tr><th></th><th>Emprendimiento</th><th>Clúster</th><th>Estado</th><th></th></tr></thead>' +
+        '<tbody>' + (filas || '<tr><td colspan="5">Nadie calza con esos filtros.</td></tr>') + '</tbody>' +
+      '</table></div>';
+
+    /* Filtros */
+    document.getElementById('filtros').addEventListener('change', function (e) {
+      filtros[e.target.name] = e.target.value;
+      mensajeLote = '';
+      render();
+    });
+
+    /* Desplegar ficha */
+    pantalla.querySelectorAll('[data-abrir]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var fila = pantalla.querySelector('[data-detalle="' + b.getAttribute('data-abrir') + '"]');
+        fila.hidden = !fila.hidden;
+        b.setAttribute('aria-expanded', String(!fila.hidden));
+        b.textContent = fila.hidden ? 'Ver ficha' : 'Cerrar ficha';
+      });
+    });
+
+    /* Acción masiva: valida cada transición una por una e informa
+       lo que no se pudo, en vez de fallar en silencio. */
+    document.getElementById('aplicar-lote').addEventListener('click', function () {
+      var accion = document.getElementById('accion-lote').value;
+      var marcadas = Array.prototype.map.call(
+        pantalla.querySelectorAll('[name="sel"]:checked'),
+        function (c) { return c.value; });
+
+      if (!accion) { mensajeLote = 'Elige una acción.'; render(); return; }
+      if (!marcadas.length) { mensajeLote = 'Marca al menos una fila.'; render(); return; }
+
+      var hechas = 0, rechazos = [];
+      marcadas.forEach(function (pid) {
+        var r = EU.admin.cambiarEstado(pid, accion);
+        if (r.ok) { hechas += 1; } else {
+          var p = EU.datos.postulacion(pid);
+          var f = p ? EU.datos.emprendedor(p.emprendedor) : null;
+          rechazos.push((f ? f.emprendimiento.nombre : pid) + ': ' + r.error);
+        }
+      });
+      mensajeLote = hechas + ' cambio(s) aplicado(s).' +
+        (rechazos.length ? ' Rechazados: ' + rechazos.join(' · ') : '');
+      render();
+    });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emprendedores</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Emprendedores">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <div class="encabezado-bloque">
+      <h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">Emprendedores</h1>
+      <p id="resumen" class="resumen-filtros"></p>
+    </div>
+    <div class="tabla-envoltura">
+      <table class="tabla">
+        <thead><tr>
+          <th>Emprendimiento</th><th>Clasificación</th><th>Comuna</th>
+          <th>Ficha</th><th class="num">Postulaciones</th><th></th>
+        </tr></thead>
+        <tbody id="filas"></tbody>
+      </table>
+    </div>
+    <div id="detalle-abierto"></div>
+  </div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/clusters.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+EU.admin.montar();
+(function () {
+  'use strict';
+  var esc = EU.util.esc;
+  var lista = EU.datos.emprendedores.slice().sort(function (a, b) {
+    return a.emprendimiento.nombre.localeCompare(b.emprendimiento.nombre, 'es');
+  });
+
+  document.getElementById('resumen').textContent = lista.length + ' fichas registradas';
+
+  document.getElementById('filas').innerHTML = lista.map(function (fi) {
+    var posts = EU.datos.postulacionesDe(fi.id);
+    return '<tr>' +
+      '<td><strong>' + esc(fi.emprendimiento.nombre) + '</strong>' +
+        '<small>' + esc(fi.representante.nombre) + '</small></td>' +
+      '<td>' + esc(EU.admin.clasificacionCorta(fi)) + '</td>' +
+      '<td>' + esc(EU.territorio.nombreComuna(fi.emprendimiento.comuna)) + '</td>' +
+      '<td>' + esc(EU.estados.etiqueta('ficha', fi.estado)) + '</td>' +
+      '<td class="num">' + posts.length + '</td>' +
+      '<td><button type="button" class="enlace-boton" data-ver="' + esc(fi.id) + '">Ver ficha</button></td>' +
+    '</tr>' +
+    '<tr class="fila-detalle" data-detalle="' + esc(fi.id) + '" hidden><td colspan="6">' +
+      EU.admin.fichaCompleta(fi) + '</td></tr>';
+  }).join('');
+
+  document.getElementById('filas').addEventListener('click', function (e) {
+    if (!e.target.hasAttribute('data-ver')) return;
+    var id = e.target.getAttribute('data-ver');
+    var fila = document.querySelector('[data-detalle="' + id + '"]');
+    fila.hidden = !fila.hidden;
+    e.target.textContent = fila.hidden ? 'Ver ficha' : 'Cerrar ficha';
+  });
+})();
+</script>
+</body>
+</html>

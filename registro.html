@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear cuenta</title>
+<meta name="description" content="Crea tu cuenta de emprendedor para completar tu ficha y postular a las oportunidades.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Crear cuenta">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <div class="dos-columnas">
+      <div>
+        <h1>Crea tu cuenta</h1>
+        <p class="angosto">Con la cuenta creada pasas a completar tu ficha: los datos
+        de tu emprendimiento, tus fotos y tus papeles. Puedes guardarla a medias y
+        terminarla en otro momento.</p>
+
+        <form class="formulario" data-form-cuenta="registro" novalidate>
+          <fieldset>
+            <legend>Datos de acceso</legend>
+            <div class="campo">
+              <label for="correo">Correo
+                <span class="pista">Un correo corresponde a una sola cuenta. Será tu
+                nombre de usuario.</span>
+              </label>
+              <input type="email" id="correo" name="correo" required
+                     autocomplete="email" inputmode="email">
+            </div>
+            <div class="campo campo--fila">
+              <div>
+                <label for="clave">Contraseña
+                  <span class="pista">Mínimo 8 caracteres.</span>
+                </label>
+                <input type="password" id="clave" name="clave" required
+                       minlength="8" autocomplete="new-password">
+              </div>
+              <div>
+                <label for="repite">Repite la contraseña</label>
+                <input type="password" id="repite" name="repite" required
+                       minlength="8" autocomplete="new-password">
+              </div>
+            </div>
+            <label class="casilla">
+              <input type="checkbox" name="autoriza" required>
+              <span>Autorizo que los datos de mi ficha se compartan con quienes
+              organizan las oportunidades a las que yo postule.</span>
+            </label>
+          </fieldset>
+
+          <p><button class="boton boton--grande" type="submit">Crear cuenta</button></p>
+          <p id="mensaje-form" class="mensaje-form" role="status" aria-live="polite"></p>
+          <p style="font-size:.9rem">¿Ya tienes cuenta?
+            <a href="entrar.html">Inicia sesión</a>.</p>
+        </form>
+      </div>
+
+      <div>
+        <h2 style="font-size:1.3rem">Lo que viene después</h2>
+        <ul class="lista-datos">
+          <li><b>Paso 1</b><span>Completas tu ficha: emprendimiento, clasificación,
+          fotos y papeles.</span></li>
+          <li><b>Paso 2</b><span>Nuestro equipo la revisa. Si algo falta, te llega la
+          observación concreta.</span></li>
+          <li><b>Paso 3</b><span>Con la ficha validada postulas a cualquier
+          oportunidad respondiendo solo sus preguntas.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script>EU.ui.montarEsqueleto();</script>
+<script src="assets/js/formularios.js"></script>
+</body>
+</html>

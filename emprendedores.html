@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Para emprendedores</title>
+<meta name="description" content="Cómo funciona para el emprendedor: crear la ficha única, postular a oportunidades y seguir el estado de cada postulación. Gratis, sin letra chica.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Para emprendedores">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido">
+
+  <section class="bloque">
+    <div class="envoltura">
+      <div class="dos-columnas">
+        <div>
+          <h1>Para emprendedores</h1>
+          <p>Usar la plataforma es gratis. Llenas tu ficha una vez, postulas a las
+          oportunidades que te sirvan y sigues el estado de cada una desde tu cuenta.
+          Lo único que puede tener costo es el stand de cada evento, y ese valor
+          aparece escrito antes de postular.</p>
+          <p class="acciones">
+            <a class="boton boton--grande" href="registro.html">Crear mi ficha</a>
+            <a class="boton boton--linea boton--grande" href="oportunidades.html">Ver oportunidades</a>
+          </p>
+        </div>
+        <div>
+          <img src="assets/img/feria-arte.jpg"
+               alt="Dos personas mirando cuadros y artesanías bajo toldos blancos en una feria"
+               width="1400" height="1120" loading="lazy" decoding="async">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque bloque--arena" aria-labelledby="t-ficha">
+    <div class="envoltura">
+      <div class="encabezado-bloque">
+        <h2 id="t-ficha">Tu ficha, el trabajo que se hace una sola vez</h2>
+      </div>
+      <div class="dos-columnas">
+        <div>
+          <p class="angosto">La ficha reúne lo que cualquier organizador va a querer
+          saber de tu emprendimiento. La completas una vez, nuestro equipo la revisa,
+          y desde ahí cada postulación son solo las preguntas propias de esa
+          oportunidad.</p>
+          <ul class="lista-datos">
+            <li><b>Quién eres</b><span>Nombre, RUT, contacto y comuna.</span></li>
+            <li><b>Tu emprendimiento</b><span>Nombre, descripción, año de inicio,
+            redes y fotos de tus productos.</span></li>
+            <li><b>Qué vendes</b><span>Rubro, subrubro y tipos de producto, para que
+            las oportunidades correctas te encuentren.</span></li>
+            <li><b>Tus papeles</b><span>Inicio de actividades, resolución sanitaria o
+            patente, si los tienes. No todos son obligatorios: cada oportunidad pide
+            lo suyo.</span></li>
+          </ul>
+        </div>
+        <div>
+          <p class="angosto"><strong>¿Por qué se revisa?</strong> Porque a quien organiza
+          le aseguramos que detrás de cada postulación hay un emprendimiento real, con
+          fotos propias y papeles al día. Esa revisión es la razón de que tu postulación
+          valga más que un formulario suelto.</p>
+          <p class="angosto">Si algo no calza, no se rechaza sin más: la ficha vuelve a
+          ti con la observación concreta para que la corrijas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque" aria-labelledby="t-estados">
+    <div class="envoltura">
+      <div class="encabezado-bloque">
+        <h2 id="t-estados">Los estados de una postulación</h2>
+        <p>Los mismos nombres que vas a ver en tu cuenta</p>
+      </div>
+      <ul class="lista-datos" id="lista-estados"></ul>
+    </div>
+  </section>
+
+  <section class="bloque bloque--tinta" aria-labelledby="t-conviene">
+    <div class="envoltura">
+      <div class="encabezado-bloque">
+        <h2 id="t-conviene">Qué conviene tener listo</h2>
+      </div>
+      <ol class="pasos">
+        <li><b>1</b><p><strong>Fotos reales de tus productos.</strong> Con luz natural y
+        fondo simple alcanza. Son lo primero que mira quien selecciona.</p></li>
+        <li><b>2</b><p><strong>Tus papeles a mano.</strong> Inicio de actividades o
+        resolución sanitaria si vendes comida. Súbelos una vez y quedan en tu ficha.</p></li>
+        <li><b>3</b><p><strong>Tu equipamiento claro.</strong> Muchas ferias exigen toldo
+        blanco de 3x3. Saber qué tienes evita postular a donde no puedes cumplir.</p></li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script>
+EU.ui.montarEsqueleto();
+
+/* Los estados se muestran desde la configuración, no copiados a mano:
+   si mañana cambia una descripción en config/estados.js, esta página
+   cambia sola y nunca queda desactualizada. */
+(function () {
+  var orden = ['postulado', 'seleccionado', 'confirmado', 'renuncio'];
+  document.getElementById('lista-estados').innerHTML = orden.map(function (id) {
+    var e = EU.estados.postulacionInfo[id];
+    return '<li><b>' + EU.util.esc(e.etiqueta) + '</b><span>' +
+           EU.util.esc(e.descripcion) + '</span></li>';
+  }).join('');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis postulaciones</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Mis postulaciones">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <div class="encabezado-bloque">
+      <h1 style="font-size:clamp(1.8rem,3.4vw,2.6rem)">Mis postulaciones</h1>
+      <p><a href="oportunidades.html">Buscar más oportunidades</a></p>
+    </div>
+    <p class="angosto">Las que siguen en curso. Cuando un evento pasa o renuncias a un
+    cupo, la postulación se mueve al <a href="cuenta-historial.html">historial</a>.</p>
+    <div id="listado"></div>
+  </div>
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/cuenta.js"></script>
+<script>
+EU.cuenta.montar();
+(function () {
+  var mias = EU.datos.postulacionesDe(EU.sesion.emprendedor).filter(function (p) {
+    return !EU.cuenta.esHistorica(p);
+  });
+  document.getElementById('listado').innerHTML = mias.length
+    ? mias.map(EU.cuenta.filaPostulacion).join('')
+    : '<div class="sin-resultados"><h2>No tienes postulaciones en curso</h2>' +
+      '<p><a class="boton" href="oportunidades.html">Ver las oportunidades abiertas</a></p></div>';
+})();
+</script>
+</body>
+</html>

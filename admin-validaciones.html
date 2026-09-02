@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validaciones</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Validaciones">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">Validaciones de ficha</h1>
+    <p class="angosto">Fichas esperando revisión humana. Se comprueba identidad,
+    clasificación, fotografías, personalización y documentos. Aprobar habilita para
+    postular; pedir corrección devuelve la ficha con la observación concreta.</p>
+    <p id="mensaje" class="mensaje-form" role="status" aria-live="polite"></p>
+    <div id="listado"></div>
+  </div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/clusters.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+EU.admin.montar();
+(function () {
+  'use strict';
+  var esc = EU.util.esc;
+  var listado = document.getElementById('listado');
+  var mensaje = document.getElementById('mensaje');
+
+  function render() {
+    var pendientes = EU.datos.emprendedores.filter(function (fi) {
+      return fi.estado === 'pendiente' || fi.estado === 'correccion';
+    });
+
+    if (!pendientes.length) {
+      listado.innerHTML = '<div class="sin-resultados"><h2>Nada pendiente</h2>' +
+        '<p>Todas las fichas están resueltas.</p></div>';
+      return;
+    }
+
+    listado.innerHTML = pendientes.map(function (fi) {
+      var obs = Object.keys(fi.observaciones || {}).map(function (s) {
+        return '<p class="aviso-categoria">' + esc(fi.observaciones[s]) + '</p>';
+      }).join('');
+      var alerta = fi.clasificacion.rubro === EU.catalogo.OTRO
+        ? '<p class="aviso-categoria">Se clasificó como "Otro": hay que decidir a qué ' +
+          'rubro corresponde o si el catálogo necesita una categoría nueva.</p>'
+        : '';
+
+      return '<details class="postulacion">' +
+        '<summary>' +
+          '<span class="postulacion__resumen">' +
+            '<strong>' + esc(fi.emprendimiento.nombre) + '</strong>' +
+            '<small>' + esc(fi.representante.nombre) + ' · ' +
+              esc(EU.admin.clasificacionCorta(fi)) + ' · enviada el ' +
+              EU.util.dia(fi.actualizada) + '</small>' +
+          '</span>' +
+          '<span class="estado estado--' + (fi.estado === 'correccion' ? 'pronto' : 'cerrada') + '">' +
+            esc(EU.estados.etiqueta('ficha', fi.estado)) + '</span>' +
+        '</summary>' +
+        '<div class="postulacion__detalle" style="max-width:none">' +
+          alerta + obs +
+          EU.admin.fichaCompleta(fi) +
+          '<div class="acciones-lote">' +
+            '<button type="button" class="boton" data-validar="' + esc(fi.id) + '">Validar ficha</button>' +
+            '<input type="text" data-obs="' + esc(fi.id) + '" placeholder="Observación para el emprendedor"' +
+              ' style="flex:1;min-width:220px;padding:.55rem .6rem;border:1px solid var(--borde);border-radius:var(--r);font:inherit">' +
+            '<button type="button" class="boton boton--linea" data-corregir="' + esc(fi.id) + '">Pedir corrección</button>' +
+          '</div>' +
+        '</div>' +
+      '</details>';
+    }).join('');
+  }
+
+  document.getElementById('listado').addEventListener('click', function (e) {
+    var b = e.target;
+    if (b.hasAttribute('data-validar')) {
+      var id = b.getAttribute('data-validar');
+      EU.admin.resolverFicha(id, 'validar');
+      mensaje.textContent = 'Ficha validada. El aviso al emprendedor se envía aparte, en Comunicaciones.';
+      render();
+    } else if (b.hasAttribute('data-corregir')) {
+      var id2 = b.getAttribute('data-corregir');
+      var campo = document.querySelector('[data-obs="' + id2 + '"]');
+      if (!campo.value.trim()) {
+        mensaje.textContent = 'Escribe la observación: el emprendedor necesita saber qué corregir.';
+        mensaje.className = 'mensaje-form mensaje-form--error';
+        campo.focus();
+        return;
+      }
+      EU.admin.resolverFicha(id2, 'corregir', campo.value.trim());
+      mensaje.className = 'mensaje-form';
+      mensaje.textContent = 'Ficha devuelta a corrección con la observación registrada.';
+      render();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

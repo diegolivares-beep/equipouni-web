@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iniciar sesión</title>
+<meta name="description" content="Entra a tu cuenta para revisar tu ficha y el estado de tus postulaciones.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Iniciar sesión">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <div style="max-width:440px">
+      <h1>Iniciar sesión</h1>
+      <p id="motivo" class="angosto" hidden>Para postular necesitas entrar a tu cuenta.
+      Si todavía no tienes una, créala primero: toma unos cinco minutos.</p>
+
+      <form class="formulario" data-form-cuenta="entrar" novalidate>
+        <fieldset>
+          <legend class="oculto-visual">Datos de acceso</legend>
+          <div class="campo">
+            <label for="correo">Correo</label>
+            <input type="email" id="correo" name="correo" required
+                   autocomplete="email" inputmode="email">
+          </div>
+          <div class="campo">
+            <label for="clave">Contraseña</label>
+            <input type="password" id="clave" name="clave" required
+                   autocomplete="current-password">
+          </div>
+        </fieldset>
+
+        <p class="acciones">
+          <button class="boton boton--grande" type="submit">Entrar</button>
+          <a class="boton boton--linea boton--grande" href="registro.html">Crear cuenta</a>
+        </p>
+        <p id="mensaje-form" class="mensaje-form" role="status" aria-live="polite"></p>
+        <p style="font-size:.9rem">La recuperación de contraseña se habilita junto con
+        el sistema de cuentas.</p>
+      </form>
+    </div>
+  </div>
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script>
+EU.ui.montarEsqueleto();
+/* Si llegó desde un botón Postular, se le explica por qué está acá. */
+if (EU.util.parametro('volver')) document.getElementById('motivo').hidden = false;
+</script>
+<script src="assets/js/formularios.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear o editar oportunidad</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Oportunidad">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <p class="migas"><a href="admin-oportunidades.html">Oportunidades</a> / Crear o editar</p>
+    <h1 id="titulo-pagina" style="font-size:clamp(1.7rem,3vw,2.4rem)"></h1>
+
+    <form class="formulario" id="form-oportunidad" novalidate style="max-width:760px">
+
+      <fieldset>
+        <legend>1. Información visible</legend>
+        <div class="campo campo--fila">
+          <div>
+            <label for="o-nombre">Nombre de la oportunidad</label>
+            <input type="text" id="o-nombre" name="nombre" required>
+          </div>
+          <div>
+            <label for="o-organizacion">Quién organiza</label>
+            <input type="text" id="o-organizacion" name="organizacion" required>
+          </div>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="o-tipo">Tipo</label>
+            <select id="o-tipo" name="tipo" required><option value="">Elige uno</option></select>
+          </div>
+          <div>
+            <label for="o-comuna">Comuna</label>
+            <select id="o-comuna" name="comuna" required><option value="">Elige una</option></select>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="o-direccion">Dirección o lugar</label>
+          <input type="text" id="o-direccion" name="direccion" required>
+        </div>
+        <div class="campo">
+          <label for="o-descripcion">Descripción pública</label>
+          <textarea id="o-descripcion" name="descripcion" required maxlength="600"></textarea>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="o-inicio">Fecha de inicio</label>
+            <input type="date" id="o-inicio" name="fechaInicio" required>
+          </div>
+          <div>
+            <label for="o-termino">Fecha de término</label>
+            <input type="date" id="o-termino" name="fechaTermino" required>
+          </div>
+          <div>
+            <label for="o-horario">Horario</label>
+            <input type="text" id="o-horario" name="horario" placeholder="11:00 a 20:00">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>2. Condiciones</legend>
+        <div class="campo campo--fila">
+          <div>
+            <label for="o-cupos">Cupos</label>
+            <input type="number" id="o-cupos" name="cupos" min="1" required>
+          </div>
+          <div>
+            <label for="o-valor">Valor del stand
+              <span class="pista">0 significa gratuita.</span>
+            </label>
+            <input type="number" id="o-valor" name="valor" min="0" required>
+          </div>
+          <div>
+            <label for="o-cierre">Cierre de postulación</label>
+            <input type="date" id="o-cierre" name="cierrePostulacion" required>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="o-incluye">Qué incluye el espacio
+            <span class="pista">Una cosa por línea.</span>
+          </label>
+          <textarea id="o-incluye" name="queIncluye"></textarea>
+        </div>
+        <div class="campo">
+          <label for="o-requisitos">Requisitos
+            <span class="pista">Uno por línea. Aparecen en el detalle público.</span>
+          </label>
+          <textarea id="o-requisitos" name="requisitos"></textarea>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="o-pago">Plazo de pago</label>
+            <input type="text" id="o-pago" name="plazoPago" placeholder="5 días corridos desde el aviso">
+          </div>
+          <div>
+            <label for="o-asistencia">Asistencia</label>
+            <input type="text" id="o-asistencia" name="asistencia" placeholder="Los dos días completos">
+          </div>
+          <div>
+            <label for="o-cancelacion">Cancelación</label>
+            <input type="text" id="o-cancelacion" name="cancelacion" placeholder="Devolución del 50% hasta 7 días antes">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>3. Perfil buscado</legend>
+        <div class="campo">
+          <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem">Rubros aceptados</span>
+          <div id="zona-rubros"></div>
+        </div>
+        <div class="campo" id="zona-subrubros"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>4. Formulario particular</legend>
+        <p class="pista" style="margin-bottom:.8rem">Preguntas que responden todos los
+        postulantes. Solo admiten una o varias opciones, y todas son obligatorias.
+        Las marcadas como filtro administrativo sirven para filtrar postulantes, como
+        la de reemplazo.</p>
+        <div id="zona-preguntas"></div>
+        <p><button type="button" class="boton boton--linea" id="agregar-pregunta">Agregar pregunta</button></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. Control interno</legend>
+        <div class="campo campo--fila">
+          <div>
+            <label for="o-estado">Estado</label>
+            <select id="o-estado" name="estado" required></select>
+          </div>
+          <div>
+            <label for="o-responsable">Responsable interno</label>
+            <input type="text" id="o-responsable" name="responsable">
+          </div>
+        </div>
+        <p class="pista">Publicar es un cambio de estado; los correos a postulantes se
+        preparan y envían aparte, en Comunicaciones.</p>
+      </fieldset>
+
+      <p><button class="boton boton--grande" type="submit">Guardar</button></p>
+      <p id="mensaje-form" class="mensaje-form" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/clusters.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>EU.admin.montar();</script>
+<script src="assets/js/constructor.js"></script>
+</body>
+</html>

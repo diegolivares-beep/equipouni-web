@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control de fundación</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<div class="demo">
+  <div class="envoltura"><p>Herramienta interna. No forma parte del sitio público.</p></div>
+</div>
+
+<main class="bloque">
+  <div class="envoltura">
+    <h1>Control de fundación</h1>
+    <p style="max-width:62ch">Comprueba que la configuración y los datos de ejemplo estén
+    completos y sean coherentes entre sí. Se abre con doble clic, sin servidor.
+    Revisa esta página cada vez que edites algo dentro de <code>config/</code> o de <code>data/</code>.</p>
+
+    <div id="salida"></div>
+  </div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/validar-datos.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  var salida = document.getElementById('salida');
+  var html = '';
+
+  /* ---------- Resultado de la validación ---------- */
+  var problemas = EU.validar.todo();
+  var errores = problemas.filter(function (p) { return p.nivel === 'error'; });
+  var avisos  = problemas.filter(function (p) { return p.nivel === 'aviso'; });
+
+  html += '<section class="control-seccion">';
+  html += '<h2>Validación</h2>';
+
+  if (!errores.length) {
+    html += '<p class="control-ok">Sin errores. ' + avisos.length + ' aviso(s).</p>';
+  } else {
+    html += '<p class="control-mal">' + errores.length + ' error(es) que hay que corregir. ' +
+            avisos.length + ' aviso(s).</p>';
+  }
+
+  if (problemas.length) {
+    html += '<ul class="problemas">';
+    errores.concat(avisos).forEach(function (p) {
+      html += '<li class="problema problema--' + p.nivel + '">' +
+              '<b>' + (p.nivel === 'error' ? 'Error' : 'Aviso') + '</b>' +
+              '<span><code>' + esc(p.donde) + '</code> ' + esc(p.texto) + '</span></li>';
+    });
+    html += '</ul>';
+  }
+  html += '</section>';
+
+  /* ---------- Resumen de la configuración ---------- */
+  var regiones = EU.territorio.regionesActivas();
+  var comunas = EU.territorio.comunasActivas();
+  var totalSub = 0, totalTipos = 0;
+  EU.catalogo.rubros.forEach(function (r) {
+    totalSub += r.subrubros.length;
+    r.subrubros.forEach(function (s) { totalTipos += (s.tipos || []).length; });
+  });
+  var ops = EU.datos.oportunidades;
+  var publicadas = ops.filter(function (o) { return o.estado === 'publicada'; });
+  var reciben = publicadas.filter(function (o) { return EU.estados.recibePostulaciones(o); });
+
+  var filas = [
+    ['Marca', EU.marca.nombre + (EU.marca.esMaqueta ? ' (marcada como maqueta)' : ' (en producción)')],
+    ['Contacto', EU.marca.contacto.correo],
+    ['Regiones activas', regiones.length + ': ' + regiones.map(function (r) { return r.nombreCorto; }).join(', ')],
+    ['Comunas disponibles', String(comunas.length)],
+    ['Modo territorial', EU.territorio.esNacional() ? 'Nacional, el selector muestra región y comuna'
+                                                    : 'Una sola región, el selector muestra solo comuna'],
+    ['Catálogo', EU.catalogo.rubros.length + ' rubros, ' + totalSub + ' subrubros, ' + totalTipos + ' tipos de producto'],
+    ['Tipos de oportunidad', String(EU.catalogo.tiposOportunidad.length)],
+    ['Estados de ficha', Object.keys(EU.estados.fichaInfo).length + ': ' +
+      Object.keys(EU.estados.fichaInfo).join(', ')],
+    ['Estados de postulación', Object.keys(EU.estados.postulacionInfo).length + ': ' +
+      Object.keys(EU.estados.postulacionInfo).join(', ')],
+    ['Oportunidades cargadas', ops.length + ' en total, ' + publicadas.length + ' publicadas'],
+    ['Reciben postulaciones hoy', reciben.length + ' de ' + publicadas.length + ' publicadas']
+  ];
+
+  html += '<section class="control-seccion"><h2>Configuración cargada</h2><dl class="control-lista">';
+  filas.forEach(function (f) {
+    html += '<div><dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd></div>';
+  });
+  html += '</dl></section>';
+
+  /* ---------- Prueba de las transiciones de estado ---------- */
+  var pruebas = [
+    ['postulado', 'seleccionado', true],
+    ['postulado', 'confirmado', false],
+    ['seleccionado', 'confirmado', true],
+    ['confirmado', 'seleccionado', false],
+    ['renuncio', 'seleccionado', false],
+    ['confirmado', 'renuncio', true]
+  ];
+  html += '<section class="control-seccion"><h2>Transiciones de postulación</h2>' +
+          '<p>Comprueba que la tabla de estados respete lo que dice la especificación.</p>' +
+          '<ul class="problemas">';
+  pruebas.forEach(function (p) {
+    var real = EU.estados.puedeTransitar(p[0], p[1]);
+    var bien = real === p[2];
+    html += '<li class="problema problema--' + (bien ? 'ok' : 'error') + '">' +
+            '<b>' + (bien ? 'Correcto' : 'Falla') + '</b>' +
+            '<span>' + p[0] + ' hacia ' + p[1] + ': ' +
+            (real ? 'permitida' : 'bloqueada') + '</span></li>';
+  });
+  html += '</ul></section>';
+
+  salida.innerHTML = html;
+})();
+</script>
+</body>
+</html>

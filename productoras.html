@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Para productoras</title>
+<meta name="description" content="Publica tu feria, mercado o evento: nos envías las bases por correo, publicamos la convocatoria y recibes las postulaciones ordenadas y con antecedentes revisados.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Para productoras">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido">
+
+  <section class="bloque">
+    <div class="envoltura">
+      <div class="dos-columnas">
+        <div>
+          <h1>Para productoras y organizaciones</h1>
+          <p>Si organizas una feria, un mercado, un pop-up o cualquier evento que
+          necesite emprendedores, nosotros ponemos la convocatoria frente a una red de
+          emprendimientos con sus antecedentes ya revisados, y te entregamos las
+          postulaciones ordenadas según el perfil que buscas.</p>
+          <p><strong>Tú sigues decidiendo quién participa.</strong> Nosotros ordenamos la
+          información y coordinamos la comunicación; la selección es tuya.</p>
+          <p class="acciones">
+            <a class="boton boton--grande" id="boton-solicitar" href="#solicitar">Solicitar una publicación</a>
+          </p>
+        </div>
+        <div>
+          <img src="assets/img/feria-textil.jpg"
+               alt="Dos personas mostrando textiles y artesanías de colores en su puesto de feria"
+               width="1400" height="933" loading="lazy" decoding="async">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque bloque--arena" aria-labelledby="t-proceso">
+    <div class="envoltura">
+      <div class="encabezado-bloque">
+        <h2 id="t-proceso">Cómo es el proceso</h2>
+        <p>Sin cuentas ni paneles: todo parte con un correo</p>
+      </div>
+      <ol class="pasos">
+        <li><b>1</b><p><strong>Nos escribes.</strong> Cuentas qué evento organizas y
+        para cuándo.</p></li>
+        <li><b>2</b><p><strong>Te enviamos la ficha del evento.</strong> Un documento
+        editable que pide lo necesario para armar la convocatoria: fechas, cupos,
+        valor, qué incluye y qué perfil buscas.</p></li>
+        <li><b>3</b><p><strong>La devuelves por correo.</strong> Nuestro equipo revisa
+        y publica la convocatoria en la plataforma.</p></li>
+        <li><b>4</b><p><strong>Recibes las postulaciones ordenadas.</strong> Agrupadas
+        por coincidencia con tu perfil, con ficha, fotos y papeles de cada
+        emprendimiento.</p></li>
+        <li><b>5</b><p><strong>Decides y nosotros comunicamos.</strong> Nos dices
+        quiénes quedan; avisamos resultados, coordinamos pagos y confirmaciones.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="bloque" aria-labelledby="t-que-recibes">
+    <div class="envoltura">
+      <div class="dos-columnas">
+        <div>
+          <h2 id="t-que-recibes">Qué recibes exactamente</h2>
+          <ul class="lista-datos">
+            <li><b>Postulaciones ordenadas</b><span>Agrupadas por coincidencia directa,
+            parcial o complementaria con el perfil que definiste. Nada de revisar cien
+            correos sueltos.</span></li>
+            <li><b>Antecedentes revisados</b><span>Cada emprendimiento llega con su
+            ficha validada: identidad, fotos propias y documentos de formalización
+            cuando corresponde.</span></li>
+            <li><b>Respuestas comparables</b><span>Todos los postulantes responden las
+            mismas preguntas que tú definiste para tu evento.</span></li>
+            <li><b>Comunicación resuelta</b><span>Avisos de selección, instrucciones de
+            pago y confirmaciones salen por nosotros, con tu decisión como única
+            fuente.</span></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Lo que no hacemos</h2>
+          <p class="angosto">Preferimos decirlo antes que descubrirlo a mitad de camino.</p>
+          <ul class="lista-datos">
+            <li><b>No seleccionamos</b><span>La decisión de admisión, rechazo y
+            reemplazo es siempre de quien organiza.</span></li>
+            <li><b>No producimos el evento</b><span>La coordinación es remota. No
+            contempla presencia física en el evento.</span></li>
+            <li><b>No mezclamos fondos</b><span>Los pagos de los expositores se rinden
+            por separado y con respaldo.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque bloque--tinta" id="solicitar" aria-labelledby="t-solicitar">
+    <div class="envoltura">
+      <h2 id="t-solicitar">Solicitar una publicación</h2>
+      <p class="angosto">Escríbenos con el nombre del evento, la fecha tentativa y la
+      comuna. Te respondemos con la ficha del evento y los pasos siguientes.</p>
+      <p class="acciones">
+        <a class="boton boton--claro boton--grande" id="correo-solicitud" href="#">Escribir para publicar</a>
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script>
+EU.ui.montarEsqueleto();
+
+/* El correo sale de la configuración, con asunto y cuerpo prellenados
+   para que la solicitud llegue con lo mínimo necesario. */
+(function () {
+  var asunto = encodeURIComponent('Solicitud de publicación de una oportunidad');
+  var cuerpo = encodeURIComponent(
+    'Nombre del evento:\nFecha tentativa:\nComuna:\nOrganización:\nTeléfono de contacto:');
+  document.getElementById('correo-solicitud').href =
+    'mailto:' + EU.marca.contacto.correo + '?subject=' + asunto + '&body=' + cuerpo;
+})();
+</script>
+</body>
+</html>

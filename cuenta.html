@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumen de mi cuenta</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Resumen de mi cuenta">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <h1 id="saludo"></h1>
+    <div class="resumen-grilla" id="resumen"></div>
+
+    <section class="control-seccion" aria-labelledby="t-pendientes">
+      <h2 id="t-pendientes" style="font-size:1.35rem">Lo que requiere tu atención</h2>
+      <ul class="lista-datos" id="pendientes"></ul>
+    </section>
+  </div>
+</main>
+
+<div id="pie"></div>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="data/oportunidades.js"></script>
+<script src="data/emprendedores.js"></script>
+<script src="data/postulaciones.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/cuenta.js"></script>
+<script>
+EU.cuenta.montar();
+
+(function () {
+  'use strict';
+  var esc = EU.util.esc;
+  var ficha = EU.sesion.ficha();
+  var mias = EU.datos.postulacionesDe(EU.sesion.emprendedor);
+
+  document.getElementById('saludo').textContent =
+    'Hola, ' + ficha.representante.nombre.split(' ')[0];
+
+  /* Contadores por estado */
+  var porEstado = { postulado: 0, seleccionado: 0, confirmado: 0, renuncio: 0 };
+  mias.forEach(function (p) { porEstado[p.estado] += 1; });
+
+  var tarjetas = [
+    { titulo: 'Mi ficha', valor: EU.estados.etiqueta('ficha', ficha.estado),
+      enlace: 'cuenta-ficha.html', accion: 'Ver mi ficha' },
+    { titulo: 'En espera de respuesta', valor: porEstado.postulado + ' postulación(es)',
+      enlace: 'cuenta-postulaciones.html', accion: 'Ver mis postulaciones' },
+    { titulo: 'Seleccionado', valor: porEstado.seleccionado + ' cupo(s) por confirmar',
+      enlace: 'cuenta-postulaciones.html', accion: 'Ver qué falta' },
+    { titulo: 'Confirmadas', valor: porEstado.confirmado + ' participación(es)',
+      enlace: 'cuenta-historial.html', accion: 'Ver historial' }
+  ];
+
+  document.getElementById('resumen').innerHTML = tarjetas.map(function (t) {
+    return '<div class="tarjeta-resumen">' +
+      '<h2>' + esc(t.titulo) + '</h2>' +
+      '<p class="tarjeta-resumen__valor">' + esc(t.valor) + '</p>' +
+      '<a href="' + t.enlace + '">' + esc(t.accion) + '</a></div>';
+  }).join('');
+
+  /* Pendientes concretos, no genéricos */
+  var pendientes = [];
+
+  if (!EU.estados.info('ficha', ficha.estado).permitePostular) {
+    pendientes.push(['Tu ficha', 'Está en estado "' +
+      EU.estados.etiqueta('ficha', ficha.estado).toLowerCase() +
+      '" y no permite postular todavía. Revísala en Mi ficha.']);
+  }
+  mias.filter(function (p) { return p.estado === 'seleccionado'; }).forEach(function (p) {
+    var o = EU.repo.oportunidades.obtener(p.oportunidad);
+    if (o) pendientes.push(['Pago pendiente', 'Quedaste seleccionada en ' + o.nombre +
+      '. El pago se hace por transferencia: ' + (o.plazoPago || 'revisa el plazo en la oportunidad') + '.']);
+  });
+  var abiertas = EU.repo.oportunidades.listar({}).filter(function (o) {
+    return !EU.datos.yaPostulo(EU.sesion.emprendedor, o.id);
+  });
+  if (abiertas.length) {
+    pendientes.push(['Oportunidades abiertas', 'Hay ' + abiertas.length +
+      ' a las que todavía no postulas. La más próxima a cerrar es ' + abiertas[0].nombre + '.']);
+  }
+  if (!pendientes.length) pendientes.push(['Todo al día', 'No hay nada esperándote.']);
+
+  document.getElementById('pendientes').innerHTML = pendientes.map(function (p) {
+    return '<li><b>' + esc(p[0]) + '</b><span>' + esc(p[1]) + '</span></li>';
+  }).join('');
+})();
+</script>
+</body>
+</html>
