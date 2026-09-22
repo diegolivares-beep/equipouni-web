@@ -1,19 +1,14 @@
 /* ============================================================
    CATÁLOGO DE CATEGORÍAS: RUBRO > SUBRUBRO > TIPO DE PRODUCTO
    ------------------------------------------------------------
-   PROPUESTA PROVISORIA, PENDIENTE DE VALIDACIÓN (T316).
-   La especificación funcional deja el catálogo normalizado como
-   "siguiente definición funcional". Mientras no esté validado, este
-   archivo es una propuesta razonable para poder construir las pantallas
-   que dependen de él, que son tres:
-     1. La ficha del emprendedor (clasificación).
-     2. El filtro del tablero de oportunidades.
-     3. El perfil buscado al crear una oportunidad.
+   Los 12 RUBROS son los que definió el cliente (brief del 2026-09-10)
+   y no se cambian sin avisarle. Los SUBRUBROS y los tipos de producto
+   son propuesta de Estudio Faro: están para que él los corrija.
 
    REGLAS QUE VIENEN DE LA ESPECIFICACIÓN:
-   - La opción "Otro" siempre deriva a revisión humana, nunca crea
-     una categoría nueva sola.
-   - Los criterios abiertos no generan clústeres automáticos.
+   - Cada emprendedor elige un rubro principal y uno o varios subrubros.
+   - "Otros productos o servicios" siempre deriva a revisión humana,
+     nunca crea una categoría nueva sola.
    - El subrubro depende del rubro, y el tipo de producto depende del
      subrubro. Nunca se muestran todos juntos.
 
@@ -23,20 +18,118 @@
 window.EU = window.EU || {};
 
 EU.catalogo = {
-  /* Valor reservado. Si el emprendedor lo elige, su ficha pasa a
-     revisión humana en vez de clasificarse sola. */
+  /* Valor reservado: el rubro 12 del cliente. Si el emprendedor lo elige,
+     su ficha pasa a revisión humana en vez de clasificarse sola. */
   OTRO: 'otro',
 
   rubros: [
     {
-      id: 'alimentos',
+      id: 'tejido-confeccion',
+      nombre: 'Tejido y confección',
+      subrubros: [
+        { id: 'telar-tejido', nombre: 'Telar y tejido a mano',
+          tipos: ['Telar', 'Tejido a palillo', 'Crochet', 'Macramé'] },
+        { id: 'ropa', nombre: 'Ropa',
+          tipos: ['Mujer', 'Hombre', 'Infantil', 'Sin género', 'Talla amplia'] },
+        { id: 'ropa-infantil', nombre: 'Ropa de bebé y niños',
+          tipos: ['Ajuar', 'Mudas', 'Gorros y zapatitos'] },
+        { id: 'bordado', nombre: 'Bordado y aplicaciones',
+          tipos: ['Bordado a mano', 'Bordado a máquina', 'Parches'] },
+        { id: 'fieltro', nombre: 'Fieltro y lana',
+          tipos: ['Fieltro', 'Lana afieltrada', 'Muñequería'] }
+      ]
+    },
+    {
+      id: 'artesania',
+      nombre: 'Artesanía y manualidades',
+      subrubros: [
+        { id: 'ceramica', nombre: 'Cerámica y greda',
+          tipos: ['Vajilla', 'Macetas', 'Figuras', 'Piezas decorativas'] },
+        { id: 'madera', nombre: 'Madera',
+          tipos: ['Utensilios', 'Juguetes', 'Muebles pequeños', 'Tallado'] },
+        { id: 'cuero', nombre: 'Cuero y marroquinería',
+          tipos: ['Billeteras', 'Cinturones', 'Calzado', 'Cuadernos'] },
+        { id: 'vidrio', nombre: 'Vidrio y mosaico',
+          tipos: ['Vitrofusión', 'Mosaico', 'Vitral'] },
+        { id: 'metal', nombre: 'Metal y alambre',
+          tipos: ['Herrería decorativa', 'Alambrismo'] },
+        { id: 'reciclado', nombre: 'Reciclado y restauración',
+          tipos: ['Objetos reciclados', 'Muebles restaurados'] }
+      ]
+    },
+    {
+      id: 'accesorios-joyeria',
+      nombre: 'Accesorios, joyería y bisutería',
+      subrubros: [
+        { id: 'joyeria-metal', nombre: 'Joyería en metal',
+          tipos: ['Plata', 'Cobre', 'Bronce', 'Acero'] },
+        { id: 'piedras', nombre: 'Piedras y minerales',
+          tipos: ['Lapislázuli', 'Piedras semipreciosas', 'Cuarzos'] },
+        { id: 'bisuteria', nombre: 'Bisutería',
+          tipos: ['Aros', 'Collares', 'Pulseras', 'Anillos'] },
+        { id: 'accesorios-vestir', nombre: 'Accesorios de vestir',
+          tipos: ['Gorros y bufandas', 'Cintillos', 'Pañuelos', 'Lentes'] },
+        { id: 'bolsos', nombre: 'Bolsos y mochilas',
+          tipos: ['Bolsos de tela', 'Mochilas', 'Estuches', 'Monederos'] }
+      ]
+    },
+    {
+      id: 'deco-hogar',
+      nombre: 'Decoración y productos para el hogar',
+      subrubros: [
+        { id: 'textil-hogar', nombre: 'Textil de hogar',
+          tipos: ['Cojines', 'Mantas', 'Manteles', 'Cortinas'] },
+        { id: 'velas-aromas', nombre: 'Velas y aromas de hogar',
+          tipos: ['Velas de soya', 'Velas decorativas', 'Difusores', 'Sahumerios'] },
+        { id: 'iluminacion-objetos', nombre: 'Iluminación y objetos',
+          tipos: ['Lámparas', 'Espejos', 'Portarretratos'] },
+        { id: 'organizacion', nombre: 'Organización y almacenaje',
+          tipos: ['Canastos', 'Cajas', 'Percheros'] },
+        { id: 'vajilla-cocina', nombre: 'Vajilla y cocina',
+          tipos: ['Vajilla', 'Utensilios', 'Individuales'] }
+      ]
+    },
+    {
+      id: 'papeleria-diseno',
+      nombre: 'Papelería, ilustración y diseño',
+      subrubros: [
+        { id: 'papeleria', nombre: 'Papelería',
+          tipos: ['Libretas', 'Agendas', 'Tarjetas', 'Planificadores'] },
+        { id: 'ilustracion', nombre: 'Ilustración y láminas',
+          tipos: ['Láminas', 'Stickers', 'Postales'] },
+        { id: 'serigrafia', nombre: 'Serigrafía y estampado',
+          tipos: ['Poleras', 'Bolsas', 'Afiches'] },
+        { id: 'diseno-personalizado', nombre: 'Diseño personalizado',
+          tipos: ['Invitaciones', 'Etiquetas', 'Identidad de marca'] }
+      ]
+    },
+    {
+      id: 'belleza-cuidado',
+      nombre: 'Belleza y cuidado personal',
+      subrubros: [
+        { id: 'cosmetica-natural', nombre: 'Cosmética natural',
+          avisa: 'Los productos cosméticos pueden requerir registro sanitario del ISP.',
+          tipos: ['Cremas', 'Aceites', 'Bálsamos labiales', 'Serums'] },
+        { id: 'jabones-bano', nombre: 'Jabones y baño',
+          tipos: ['Jabón artesanal', 'Sales de baño', 'Exfoliantes', 'Bombas de baño'] },
+        { id: 'capilar', nombre: 'Cuidado capilar',
+          tipos: ['Champú sólido', 'Aceites capilares', 'Acondicionadores'] },
+        { id: 'maquillaje', nombre: 'Maquillaje',
+          tipos: ['Labiales', 'Sombras', 'Brochas'] },
+        { id: 'perfumeria', nombre: 'Perfumería y aromaterapia',
+          tipos: ['Perfumes', 'Aceites esenciales', 'Sahumerios'] }
+      ]
+    },
+    {
+      id: 'alimentos-bebidas',
       nombre: 'Alimentos y bebidas',
-      /* Advertencia que la ficha muestra al elegir este rubro. */
       avisa: 'Vender comida preparada exige resolución sanitaria vigente.',
       subrubros: [
         { id: 'pasteleria', nombre: 'Pastelería y repostería',
           tipos: ['Tortas', 'Galletas', 'Kuchen', 'Postres individuales', 'Sin azúcar o sin gluten'] },
-        { id: 'conservas', nombre: 'Conservas y mermeladas',
+        { id: 'panaderia', nombre: 'Panadería',
+          tipos: ['Pan artesanal', 'Masa madre', 'Pan sin gluten'] },
+        { id: 'conservas', nombre: 'Conservas, mermeladas y miel',
           tipos: ['Mermeladas', 'Encurtidos', 'Salsas', 'Miel', 'Aceite de oliva'] },
         { id: 'comida-preparada', nombre: 'Comida preparada',
           tipos: ['Comida caliente', 'Sándwiches', 'Comida vegana', 'Repostería salada'] },
@@ -50,103 +143,71 @@ EU.catalogo = {
       ]
     },
     {
-      id: 'artesania',
-      nombre: 'Artesanía',
+      id: 'plantas-naturales',
+      nombre: 'Plantas y productos naturales',
       subrubros: [
-        { id: 'ceramica', nombre: 'Cerámica y greda',
-          tipos: ['Vajilla', 'Macetas', 'Figuras', 'Piezas decorativas'] },
-        { id: 'textil-artesanal', nombre: 'Textil artesanal',
-          tipos: ['Telar', 'Tejido a palillo o crochet', 'Fieltro', 'Bordado'] },
-        { id: 'joyeria', nombre: 'Joyería y orfebrería',
-          tipos: ['Plata', 'Cobre', 'Lapislázuli y piedras', 'Bisutería'] },
-        { id: 'cuero', nombre: 'Cuero y marroquinería',
-          tipos: ['Billeteras', 'Cinturones', 'Bolsos', 'Calzado'] },
-        { id: 'madera', nombre: 'Madera',
-          tipos: ['Utensilios', 'Juguetes', 'Muebles pequeños', 'Tallado'] },
-        { id: 'vidrio-metal', nombre: 'Vidrio y metal',
-          tipos: ['Vitrofusión', 'Mosaico', 'Herrería decorativa'] }
-      ]
-    },
-    {
-      id: 'diseno-moda',
-      nombre: 'Diseño y moda',
-      subrubros: [
-        { id: 'ropa', nombre: 'Ropa',
-          tipos: ['Mujer', 'Hombre', 'Infantil', 'Sin género', 'Talla amplia'] },
-        { id: 'accesorios-moda', nombre: 'Accesorios',
-          tipos: ['Gorros y bufandas', 'Lentes', 'Cintillos', 'Pañuelos'] },
-        { id: 'bolsos', nombre: 'Bolsos y mochilas',
-          tipos: ['Bolsos de tela', 'Mochilas', 'Estuches'] },
-        { id: 'calzado', nombre: 'Calzado',
-          tipos: ['Zapatos', 'Pantuflas', 'Sandalias'] }
-      ]
-    },
-    {
-      id: 'cosmetica',
-      nombre: 'Cosmética y cuidado personal',
-      subrubros: [
-        { id: 'cosmetica-natural', nombre: 'Cosmética natural',
-          avisa: 'Los productos cosméticos pueden requerir registro sanitario del ISP.',
-          tipos: ['Cremas', 'Aceites', 'Bálsamos labiales'] },
-        { id: 'jabones', nombre: 'Jabones y baño',
-          tipos: ['Jabón artesanal', 'Sales de baño', 'Exfoliantes'] },
-        { id: 'capilar', nombre: 'Cuidado capilar',
-          tipos: ['Champú sólido', 'Aceites capilares'] },
-        { id: 'aromaterapia', nombre: 'Aromaterapia',
-          tipos: ['Aceites esenciales', 'Difusores', 'Sahumerios'] }
-      ]
-    },
-    {
-      id: 'deco-hogar',
-      nombre: 'Deco y hogar',
-      subrubros: [
-        { id: 'textil-hogar', nombre: 'Textil de hogar',
-          tipos: ['Cojines', 'Mantas', 'Manteles', 'Cortinas'] },
-        { id: 'velas', nombre: 'Velas y aromas de hogar',
-          tipos: ['Velas de soya', 'Velas decorativas', 'Difusores'] },
-        { id: 'plantas', nombre: 'Plantas y jardinería',
-          tipos: ['Suculentas', 'Plantas de interior', 'Huerto', 'Composteras'] },
-        { id: 'iluminacion-deco', nombre: 'Iluminación y objetos',
-          tipos: ['Lámparas', 'Espejos', 'Portarretratos'] }
-      ]
-    },
-    {
-      id: 'papeleria-arte',
-      nombre: 'Papelería, arte e ilustración',
-      subrubros: [
-        { id: 'ilustracion', nombre: 'Ilustración y láminas',
-          tipos: ['Láminas', 'Stickers', 'Postales'] },
-        { id: 'papeleria', nombre: 'Papelería',
-          tipos: ['Libretas', 'Agendas', 'Tarjetas'] },
-        { id: 'serigrafia', nombre: 'Serigrafía y estampado',
-          tipos: ['Poleras', 'Bolsas', 'Afiches'] },
-        { id: 'fotografia-arte', nombre: 'Fotografía y pintura',
-          tipos: ['Fotografía impresa', 'Pintura', 'Grabado'] }
+        { id: 'plantas', nombre: 'Plantas',
+          tipos: ['Suculentas', 'Plantas de interior', 'Cactus', 'Plantines'] },
+        { id: 'huerto', nombre: 'Huerto y jardinería',
+          tipos: ['Semillas', 'Composteras', 'Herramientas', 'Sustratos'] },
+        { id: 'hierbas', nombre: 'Hierbas y productos naturales',
+          avisa: 'Los productos con uso medicinal declarado requieren autorización del ISP.',
+          tipos: ['Hierbas secas', 'Tinturas', 'Ungüentos'] },
+        { id: 'flores', nombre: 'Flores y arreglos',
+          tipos: ['Flores frescas', 'Flores secas', 'Coronas', 'Ramos'] }
       ]
     },
     {
       id: 'mascotas',
-      nombre: 'Mascotas',
+      nombre: 'Productos para mascotas',
       subrubros: [
         { id: 'alimento-mascotas', nombre: 'Alimento y snacks',
-          tipos: ['Snacks naturales', 'Alimento preparado'] },
+          tipos: ['Snacks naturales', 'Alimento preparado', 'Galletas'] },
         { id: 'accesorios-mascotas', nombre: 'Accesorios',
-          tipos: ['Camas', 'Collares y correas', 'Juguetes', 'Ropa'] }
+          tipos: ['Camas', 'Collares y correas', 'Juguetes', 'Ropa'] },
+        { id: 'cuidado-mascotas', nombre: 'Cuidado e higiene',
+          tipos: ['Shampoo', 'Cepillos', 'Colonias'] }
       ]
     },
     {
-      id: 'servicios',
-      nombre: 'Servicios',
+      id: 'arte-fotografia',
+      nombre: 'Arte y fotografía',
+      subrubros: [
+        { id: 'pintura', nombre: 'Pintura y dibujo',
+          tipos: ['Óleo', 'Acuarela', 'Acrílico', 'Dibujo'] },
+        { id: 'fotografia', nombre: 'Fotografía',
+          tipos: ['Fotografía impresa', 'Fotolibros', 'Postales'] },
+        { id: 'escultura', nombre: 'Escultura y objeto',
+          tipos: ['Escultura', 'Objeto de autor'] },
+        { id: 'grabado', nombre: 'Grabado y técnicas mixtas',
+          tipos: ['Grabado', 'Linograbado', 'Collage'] }
+      ]
+    },
+    {
+      id: 'servicios-eventos',
+      nombre: 'Servicios para eventos',
       /* Los servicios rara vez ocupan un stand de venta. Se mantienen
          porque la ficha los admite, pero muchas oportunidades los excluyen. */
       subrubros: [
         { id: 'talleres', nombre: 'Talleres y experiencias',
           tipos: ['Taller para niños', 'Taller para adultos', 'Demostración en vivo'] },
+        { id: 'fotografia-eventos', nombre: 'Fotografía de eventos',
+          tipos: ['Cobertura', 'Fotos instantáneas'] },
+        { id: 'animacion', nombre: 'Animación y música',
+          tipos: ['Música en vivo', 'Animación infantil', 'Caricaturas en vivo'] },
         { id: 'bienestar', nombre: 'Bienestar y terapias',
           tipos: ['Masaje', 'Terapias complementarias'] },
-        { id: 'servicios-creativos', nombre: 'Servicios creativos',
-          tipos: ['Diseño gráfico', 'Fotografía de eventos', 'Caricaturas en vivo'] }
+        { id: 'produccion', nombre: 'Producción y montaje',
+          tipos: ['Arriendo de mobiliario', 'Decoración de eventos'] }
       ]
+    },
+    {
+      /* Rubro 12 del cliente. Sin subrubros a propósito: al elegirlo, la
+         ficha pide el detalle en texto y pasa a revisión de una persona. */
+      id: 'otro',
+      nombre: 'Otros productos o servicios',
+      avisa: 'Al elegir este rubro, una persona del equipo revisa tu caso para clasificarlo.',
+      subrubros: []
     }
   ]
 };
@@ -206,7 +267,6 @@ EU.catalogo.tipos = function (idSubrubro) {
    existe devuelve el id crudo, para que un dato malo se vea en pantalla
    en vez de desaparecer en silencio. */
 EU.catalogo.nombre = function (id) {
-  if (id === EU.catalogo.OTRO) return 'Otro (requiere revisión)';
   var r = EU.catalogo.rubro(id);
   if (r) return r.nombre;
   var s = EU.catalogo.subrubro(id);

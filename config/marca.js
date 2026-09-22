@@ -21,7 +21,7 @@ EU.marca = {
   nombre: 'EquipoUni',
 
   /* Bajada corta bajo el logotipo. Maximo unas 5 palabras. */
-  bajada: 'Red de emprendedores',
+  bajada: 'Más oportunidades, más claridad, un solo equipo',
 
   /* Una linea que explica que es esto. Se usa en las metaetiquetas. */
   descripcion: 'Red que conecta emprendedores con oportunidades para vender, ' +
@@ -32,10 +32,18 @@ EU.marca = {
   esMaqueta: true,
 
   contacto: {
-    correo: 'contacto@ejemplo.cl',
+    correo: 'contacto@equipouni.cl',
     whatsapp: '',
-    instagram: ''
+    instagram: 'equipouni.cl'
   },
+
+  /* Los tres pilares de la marca (brief del cliente). Son los que dan
+     origen a los tres nodos del logotipo. */
+  pilares: [
+    { titulo: 'Conecta', texto: 'Reúne en un solo lugar las oportunidades que hoy están dispersas.' },
+    { titulo: 'Facilita', texto: 'Una ficha que se llena una vez y sirve para postular a todas.' },
+    { titulo: 'Impulsa', texto: 'Más espacios para vender, con reglas claras desde el principio.' }
+  ],
 
   /* Territorio que cubre hoy la operacion. Debe existir en
      config/territorio.js. Ver ese archivo para pasar a nivel nacional. */

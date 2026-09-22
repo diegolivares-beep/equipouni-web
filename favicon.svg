@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="4" fill="#14506B"/>
-  <path d="M5 15 L16 6 L27 15 Z" fill="#F2ECE1"/>
-  <path d="M7 15 h4 v3 h-4 z M14 15 h4 v3 h-4 z M21 15 h4 v3 h-4 z" fill="#F2ECE1"/>
-  <rect x="8" y="18" width="2.4" height="9" fill="#F2ECE1"/>
-  <rect x="21.6" y="18" width="2.4" height="9" fill="#F2ECE1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><title>EquipoUni</title>
+<rect width="32" height="32" rx="6" fill="#0F7D6B"/>
+<path d="M9 12 H17" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M17 12 L23 20" stroke="#E6A57E" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="9" cy="12" r="3.1" fill="#FFFFFF"/>
+<circle cx="17" cy="12" r="3.1" fill="#FFFFFF"/>
+<circle cx="23" cy="20" r="3.6" fill="#E6A57E"/>
 </svg>

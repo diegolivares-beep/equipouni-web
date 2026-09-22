@@ -195,9 +195,16 @@ EU.ui = {
     return p || 'index.html';
   },
 
-  logotipo: function () {
-    return '<a class="marca" href="index.html">' + EU.util.esc(EU.marca.nombre) +
-           '<span>' + EU.util.esc(EU.marca.bajada) + '</span></a>';
+  /* El logotipo es el SVG de marca, no texto. Se usa <img> y no SVG en
+     linea para que el navegador lo cachee una vez y lo reutilice en las
+     21 paginas. La variante invertida es para fondos oscuros. */
+  logotipo: function (invertido) {
+    var archivo = invertido ? 'logo-invertido.svg' : 'logo.svg';
+    return '<a class="marca" href="index.html" aria-label="' +
+           EU.util.esc(EU.marca.nombre) + ', ir al inicio">' +
+           '<img src="assets/marca/' + archivo + '" alt="' +
+           EU.util.esc(EU.marca.nombre) + '" width="210" height="49">' +
+           '</a>';
   },
 
   cabecera: function () {
@@ -248,7 +255,7 @@ EU.ui = {
 
     return '<footer class="pie"><div class="envoltura">' +
       '<div class="pie__grilla">' +
-        '<div>' + EU.ui.logotipo() + '</div>' +
+        '<div>' + EU.ui.logotipo(true) + '</div>' +
         '<div><strong>Emprendedores</strong><ul>' +
           '<li><a href="oportunidades.html">Ver oportunidades</a></li>' +
           '<li><a href="registro.html">Crear mi ficha</a></li>' +

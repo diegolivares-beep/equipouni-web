@@ -12,17 +12,26 @@
 
 :root {
   /* Color */
-  --tinta:     #16232B;   /* texto y fondos oscuros */
-  --tinta-2:   #4A5A63;   /* texto secundario */
-  --marca:     #14506B;   /* azul de lona, color de marca */
-  --marca-osc: #0E3B50;
-  --marca-piso:#E8F0F4;
-  --teja:      #A2482A;   /* solo urgencia y error */
-  --teja-piso: #F7EAE4;
-  --papel:     #FFFDF8;
-  --arena:     #F2ECE1;
-  --arena-2:   #E7DECE;
-  --borde:     #D3C8B6;
+  /* Identidad entregada por el cliente (brief 2026-09-10).
+     Los tres colores de marca son suyos; los neutros los derivamos
+     de ellos para que todo el sitio se sienta del mismo sistema. */
+  --tinta:     #14262B;   /* texto y fondos oscuros */
+  --tinta-2:   #4C6169;   /* texto secundario */
+  --marca:     #0F7D6B;   /* verde esmeralda, color principal */
+  --marca-osc: #0A5F51;   /* su version oscura, para hover */
+  --marca-piso:#E4F1EE;   /* fondo suave del mismo verde */
+  --petroleo:  #2D6A5B;   /* verde petroleo del brief, apoyo */
+  --damasco:   #E6A57E;   /* acento calido */
+  --damasco-piso:#FBEDE4;
+  /* El damasco no alcanza contraste suficiente para texto chico:
+     para urgencias y errores se usa este tono tostado mas oscuro,
+     que es el mismo color llevado a un valor legible. */
+  --teja:      #A65A32;
+  --teja-piso: #FBEDE4;
+  --papel:     #FFFCF8;
+  --arena:     #F2EDE6;
+  --arena-2:   #E6DED3;
+  --borde:     #D4CABD;
 
   /* Medida */
   --max: 1180px;
@@ -37,14 +46,14 @@ body {
   margin: 0;
   background: var(--papel);
   color: var(--tinta);
-  font-family: Archivo, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: Manrope, "Segoe UI", system-ui, -apple-system, sans-serif;
   font-size: 17px;
   line-height: 1.55;
   font-variant-numeric: tabular-nums;
 }
 
 h1, h2, h3, h4 {
-  font-family: Archivo, "Arial Narrow", "Segoe UI", sans-serif;
+  font-family: "Bricolage Grotesque", "Arial Narrow", "Segoe UI", sans-serif;
   font-stretch: 82%;
   font-weight: 700;
   line-height: 1.03;
@@ -102,20 +111,13 @@ img { max-width: 100%; height: auto; display: block; }
   min-height: 78px; flex-wrap: wrap;
 }
 
-/* Sin text-transform: el nombre puede llevar mayúsculas internas
-   ("EquipoUni") y forzarlo a versales las borra, dejando "EQUIPOUNI",
-   que se lee como una sola palabra. */
-.marca {
-  font-family: Archivo, sans-serif;
-  font-stretch: 78%; font-weight: 800; font-size: 1.6rem;
-  letter-spacing: -.01em;
-  color: var(--tinta); text-decoration: none; line-height: 1;
-}
-.marca span {
-  display: block; font-size: .55rem; font-stretch: 100%; font-weight: 500;
-  letter-spacing: .16em; color: var(--tinta-2); margin-top: .22rem;
-  text-transform: uppercase;
-}
+/* El logotipo es una imagen: se fija el alto y el ancho se acomoda,
+   para que la cabecera no salte mientras carga. */
+.marca { display: block; text-decoration: none; line-height: 0; }
+.marca img { height: 40px; width: auto; display: block; }
+.pie .marca img { height: 36px; }
+
+@media (max-width: 620px) { .marca img { height: 32px; } }
 
 .menu {
   display: flex; gap: 1.15rem; list-style: none;
@@ -302,7 +304,7 @@ img { max-width: 100%; height: auto; display: block; }
 .pasos li:last-child { border-right: 0; }
 .pasos li + li { padding-left: 1.6rem; }
 .pasos b {
-  display: block; font-family: Archivo, sans-serif; font-stretch: 78%;
+  display: block; font-family: "Bricolage Grotesque", sans-serif; font-stretch: 78%;
   font-size: 2.5rem; line-height: 1; color: var(--marca); margin-bottom: .5rem;
 }
 .bloque--tinta .pasos b { color: #7FB2CB; }
@@ -363,7 +365,7 @@ img { max-width: 100%; height: auto; display: block; }
 .preguntas details { border-bottom: 1px solid var(--borde); padding: 1rem 0; }
 .preguntas summary {
   cursor: pointer; font-weight: 700; font-size: 1.02rem;
-  font-family: Archivo, sans-serif; font-stretch: 92%;
+  font-family: "Bricolage Grotesque", sans-serif; font-stretch: 92%;
   list-style: none; display: flex; justify-content: space-between; gap: 1rem;
 }
 .preguntas summary::-webkit-details-marker { display: none; }
@@ -379,7 +381,7 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 1.2rem 0 1.4rem; margin: 0 0 1rem;
 }
 .formulario legend {
-  font-family: Archivo, sans-serif; font-stretch: 88%;
+  font-family: "Bricolage Grotesque", sans-serif; font-stretch: 88%;
   font-weight: 700; font-size: 1.12rem; padding: 0 .7rem 0 0;
 }
 .campo { margin-bottom: 1.1rem; }
@@ -432,7 +434,7 @@ img { max-width: 100%; height: auto; display: block; }
   text-transform: uppercase; color: var(--tinta-2); margin-bottom: .5rem;
 }
 .tarjeta-resumen__valor {
-  font-family: Archivo, sans-serif; font-stretch: 85%;
+  font-family: "Bricolage Grotesque", sans-serif; font-stretch: 85%;
   font-size: 1.3rem; font-weight: 700; margin: 0 0 .5rem; line-height: 1.15;
 }
 .tarjeta-resumen a { font-size: .85rem; }
@@ -446,7 +448,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .postulacion summary::-webkit-details-marker { display: none; }
 .postulacion__resumen strong {
-  display: block; font-family: Archivo, sans-serif; font-stretch: 90%;
+  display: block; font-family: "Bricolage Grotesque", sans-serif; font-stretch: 90%;
   font-size: 1.05rem;
 }
 .postulacion__resumen small { color: var(--tinta-2); font-size: .84rem; }
@@ -482,7 +484,7 @@ legend .estado { margin-left: .5rem; vertical-align: middle; }
   border-bottom: 1px solid var(--borde);
   padding: .7rem .8rem .7rem 0; vertical-align: top;
 }
-.tabla td strong { font-family: Archivo, sans-serif; font-stretch: 90%; }
+.tabla td strong { font-family: "Bricolage Grotesque", sans-serif; font-stretch: 90%; }
 .tabla .num { text-align: right; }
 .tabla small { color: var(--tinta-2); display: block; }
 

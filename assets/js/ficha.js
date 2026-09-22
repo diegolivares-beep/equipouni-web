@@ -118,11 +118,6 @@
     op.value = ru.id; op.textContent = ru.nombre;
     selRubro.appendChild(op);
   });
-  var opOtro = document.createElement('option');
-  opOtro.value = EU.catalogo.OTRO;
-  opOtro.textContent = 'Otro (lo revisa una persona)';
-  selRubro.appendChild(opOtro);
-
   function poblarSubrubros(idRubro, valor) {
     selSubrubro.innerHTML = '<option value="">Elige uno</option>';
     EU.catalogo.subrubros(idRubro).forEach(function (s) {
