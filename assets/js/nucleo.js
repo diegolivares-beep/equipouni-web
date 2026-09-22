@@ -199,11 +199,11 @@ EU.ui = {
      linea para que el navegador lo cachee una vez y lo reutilice en las
      21 paginas. La variante invertida es para fondos oscuros. */
   logotipo: function (invertido) {
-    var archivo = invertido ? 'logo-invertido.svg' : 'logo.svg';
+    var archivo = invertido ? 'cliente-logo-invertido.png' : 'cliente-logo.png';
     return '<a class="marca" href="index.html" aria-label="' +
            EU.util.esc(EU.marca.nombre) + ', ir al inicio">' +
            '<img src="assets/marca/' + archivo + '" alt="' +
-           EU.util.esc(EU.marca.nombre) + '" width="210" height="49">' +
+           EU.util.esc(EU.marca.nombre) + '" width="729" height="281">' +
            '</a>';
   },
 

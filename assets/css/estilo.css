@@ -17,11 +17,11 @@
      de ellos para que todo el sitio se sienta del mismo sistema. */
   --tinta:     #14262B;   /* texto y fondos oscuros */
   --tinta-2:   #4C6169;   /* texto secundario */
-  --marca:     #0F7D6B;   /* verde esmeralda, color principal */
-  --marca-osc: #0A5F51;   /* su version oscura, para hover */
+  --marca:     #086C5A;   /* verde esmeralda, medido de su logo */
+  --marca-osc: #05594A;   /* su version oscura, para hover */
   --marca-piso:#E4F1EE;   /* fondo suave del mismo verde */
-  --petroleo:  #2D6A5B;   /* verde petroleo del brief, apoyo */
-  --damasco:   #E6A57E;   /* acento calido */
+  --petroleo:  #044B6E;   /* azul petroleo REAL, medido de su logo */
+  --damasco:   #EA9B72;   /* acento calido, medido de su logo */
   --damasco-piso:#FBEDE4;
   /* El damasco no alcanza contraste suficiente para texto chico:
      para urgencias y errores se usa este tono tostado mas oscuro,
@@ -114,8 +114,8 @@ img { max-width: 100%; height: auto; display: block; }
 /* El logotipo es una imagen: se fija el alto y el ancho se acomoda,
    para que la cabecera no salte mientras carga. */
 .marca { display: block; text-decoration: none; line-height: 0; }
-.marca img { height: 40px; width: auto; display: block; }
-.pie .marca img { height: 36px; }
+.marca img { height: 42px; width: auto; display: block; }
+.pie .marca img { height: 38px; }
 
 @media (max-width: 620px) { .marca img { height: 32px; } }
 
@@ -594,4 +594,73 @@ code {
   font-family: Consolas, "SF Mono", Menlo, monospace;
   font-size: .84rem; line-height: 1.5;
   white-space: pre-wrap; overflow-x: auto; max-width: 640px;
+}
+
+/* ---------- Hoja imprimible de postulantes (exportar a PDF) ----------
+   En pantalla no se ve nunca. Al imprimir, se oculta todo el panel y
+   queda solo la hoja, con formato de documento. */
+
+#hoja-impresion { display: none; }
+
+@media print {
+  body.imprimiendo > *:not(#hoja-impresion) { display: none !important; }
+  body.imprimiendo #hoja-impresion { display: block; }
+  body.imprimiendo { background: #fff; }
+  @page { size: A4; margin: 14mm 12mm; }
+}
+
+.hoja { color: var(--tinta); font-size: 10.5pt; }
+
+.cabecera-pdf {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; border-bottom: 2px solid var(--marca); padding-bottom: 8px;
+}
+.logo-pdf { height: 34px; width: auto; }
+.meta-pdf { text-align: right; line-height: 1.35; }
+.meta-pdf strong { display: block; font-size: 10pt; color: var(--marca); }
+.meta-pdf span { font-size: 8.5pt; color: var(--tinta-2); }
+
+.titulo-pdf {
+  font-family: "Bricolage Grotesque", sans-serif; font-weight: 700;
+  font-size: 19pt; margin: 14px 0 3px; line-height: 1.1;
+}
+.bajada-pdf { font-size: 9.5pt; color: var(--tinta-2); margin: 0 0 2px; }
+.conteo-pdf { font-size: 9.5pt; font-weight: 700; margin: 0 0 14px; }
+
+.ficha-pdf {
+  border: 1px solid var(--borde); border-radius: 3px;
+  padding: 10px 12px; margin-bottom: 10px;
+  break-inside: avoid; page-break-inside: avoid;
+}
+.ficha-pdf header {
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--arena-2); padding-bottom: 7px; margin-bottom: 7px;
+}
+.ficha-pdf .numero {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--marca); color: #fff; font-weight: 700; font-size: 9pt;
+  display: flex; align-items: center; justify-content: center;
+}
+.ficha-pdf h2 {
+  font-family: "Bricolage Grotesque", sans-serif; font-size: 12pt;
+  margin: 0; line-height: 1.15;
+}
+.ficha-pdf .clasif { font-size: 8.5pt; color: var(--tinta-2); margin: 1px 0 0; }
+.ficha-pdf header > div { flex: 1; }
+.estado-pdf {
+  font-size: 8pt; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; border: 1px solid var(--marca);
+  color: var(--marca); padding: 2px 7px; border-radius: 3px; white-space: nowrap;
+}
+
+.datos-pdf { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.datos-pdf td { padding: 2.5px 0; vertical-align: top; }
+.datos-pdf .pregunta {
+  width: 33%; color: var(--tinta-2); padding-right: 10px;
+  font-size: 8.5pt; text-transform: uppercase; letter-spacing: .04em;
+}
+
+.pie-pdf {
+  margin-top: 14px; padding-top: 7px; border-top: 1px solid var(--borde);
+  font-size: 8pt; color: var(--tinta-2); text-align: center;
 }

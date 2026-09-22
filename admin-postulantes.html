@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postulantes</title>
 <meta name="robots" content="noindex">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Manrope:wght@400..700&display=swap">
@@ -30,6 +31,7 @@
 <script src="assets/js/nucleo.js"></script>
 <script src="assets/js/clusters.js"></script>
 <script src="assets/js/admin.js"></script>
+<script src="assets/js/exportar.js"></script>
 <script>
 EU.admin.montar();
 
@@ -149,6 +151,7 @@ EU.admin.montar();
           '<option value="renuncio">Registrar renuncia</option>' +
         '</select>' +
         '<button type="button" class="boton" id="aplicar-lote">Aplicar</button>' +
+        '<button type="button" class="boton boton--linea" id="exportar-pdf">Exportar a PDF</button>' +
         '<span class="resumen-filtros">Los correos se envían aparte, en Comunicaciones.</span>' +
       '</div>' +
       '<p id="mensaje-lote" class="mensaje-form" role="status" aria-live="polite">' +
@@ -174,6 +177,33 @@ EU.admin.montar();
         b.setAttribute('aria-expanded', String(!fila.hidden));
         b.textContent = fila.hidden ? 'Ver ficha' : 'Cerrar ficha';
       });
+    });
+
+    /* Exportar a PDF: usa las filas marcadas; si no hay ninguna marcada,
+       usa las que ya están en estado Seleccionado, que es el caso normal
+       de "mandarle la lista a la productora". */
+    document.getElementById('exportar-pdf').addEventListener('click', function () {
+      var marcadas = Array.prototype.map.call(
+        pantalla.querySelectorAll('[name="sel"]:checked'),
+        function (c) { return c.value; });
+
+      var elegidas;
+      if (marcadas.length) {
+        elegidas = todas.filter(function (x) {
+          return marcadas.indexOf(x.postulacion.id) !== -1;
+        });
+      } else {
+        elegidas = todas.filter(function (x) {
+          return x.postulacion.estado === EU.estados.postulacion.SELECCIONADO;
+        });
+      }
+
+      if (!elegidas.length) {
+        mensajeLote = 'Marca los postulantes que quieres exportar, o cambia a Seleccionado a los que van.';
+        render();
+        return;
+      }
+      EU.exportar.imprimir(o, elegidas);
     });
 
     /* Acción masiva: valida cada transición una por una e informa

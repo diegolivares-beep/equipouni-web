@@ -21,7 +21,7 @@ EU.marca = {
   nombre: 'EquipoUni',
 
   /* Bajada corta bajo el logotipo. Maximo unas 5 palabras. */
-  bajada: 'Más oportunidades, más claridad, un solo equipo',
+  bajada: 'Mismas ideas. Más claridad. Un solo equipo.',
 
   /* Una linea que explica que es esto. Se usa en las metaetiquetas. */
   descripcion: 'Red que conecta emprendedores con oportunidades para vender, ' +
