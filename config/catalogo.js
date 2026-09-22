@@ -22,6 +22,12 @@ EU.catalogo = {
      su ficha pasa a revisión humana en vez de clasificarse sola. */
   OTRO: 'otro',
 
+  /* Cuántos subrubros puede marcar un emprendedor. El brief dice "uno o
+     varios" sin poner tope; 0 significa sin límite. Si más adelante el
+     cliente quiere acotarlo (por ejemplo a 3), se cambia solo este número
+     y la ficha empieza a exigirlo sola. */
+  MAX_SUBRUBROS: 0,
+
   rubros: [
     {
       id: 'tejido-confeccion',
@@ -285,6 +291,24 @@ EU.catalogo.avisos = function (ids) {
     if (s && s.avisa && salida.indexOf(s.avisa) === -1) salida.push(s.avisa);
   });
   return salida;
+};
+
+/* ---------- Subrubros de una ficha ----------
+   Toda la aplicación pregunta por los subrubros con esta función y nunca
+   lee el campo directo. Así el formato puede cambiar (hoy es una lista,
+   antes era un solo valor) sin tocar las pantallas: acá se normaliza. */
+EU.catalogo.subrubrosDe = function (clasificacion) {
+  if (!clasificacion) return [];
+  var v = clasificacion.subrubros !== undefined ? clasificacion.subrubros : clasificacion.subrubro;
+  if (!v) return [];
+  return Array.isArray(v) ? v.slice() : [v];
+};
+
+/* Nombres legibles de los subrubros de una ficha, ya ordenados. */
+EU.catalogo.nombresSubrubros = function (clasificacion) {
+  return EU.catalogo.subrubrosDe(clasificacion).map(function (id) {
+    return EU.catalogo.nombre(id);
+  });
 };
 
 /* Lista plana de rubros para poblar un selector. */

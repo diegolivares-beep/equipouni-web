@@ -72,7 +72,8 @@
       '<dl class="datos">' +
         '<div><dt>Emprendimiento</dt><dd>' + esc(ficha.emprendimiento.nombre) + '</dd></div>' +
         '<div><dt>Qué vende</dt><dd>' + esc(EU.catalogo.nombre(ficha.clasificacion.rubro)) +
-          (ficha.clasificacion.subrubro ? ', ' + esc(EU.catalogo.nombre(ficha.clasificacion.subrubro).toLowerCase()) : '') +
+          (EU.catalogo.nombresSubrubros(ficha.clasificacion).length
+            ? ', ' + esc(EU.catalogo.nombresSubrubros(ficha.clasificacion).join(', ').toLowerCase()) : '') +
         '</dd></div>' +
         '<div><dt>Comuna</dt><dd>' + esc(EU.territorio.nombreComuna(ficha.emprendimiento.comuna)) + '</dd></div>' +
         '<div><dt>Contacto</dt><dd>' + esc(ficha.representante.correo) + '</dd></div>' +

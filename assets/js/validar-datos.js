@@ -167,8 +167,21 @@ EU.validar = (function () {
         if (rubro !== EU.catalogo.OTRO && !EU.catalogo.rubro(rubro)) {
           error(id, 'el rubro "' + rubro + '" no existe en el catálogo');
         }
-        if (f.clasificacion.subrubro && !EU.catalogo.subrubro(f.clasificacion.subrubro)) {
-          error(id, 'el subrubro "' + f.clasificacion.subrubro + '" no existe en el catálogo');
+        var subs = EU.catalogo.subrubrosDe(f.clasificacion);
+        subs.forEach(function (s) {
+          if (!EU.catalogo.subrubro(s)) {
+            error(id, 'el subrubro "' + s + '" no existe en el catálogo');
+          } else {
+            /* Un subrubro tiene que pertenecer al rubro principal elegido. */
+            var pertenece = EU.catalogo.subrubros(rubro).some(function (x) { return x.id === s; });
+            if (!pertenece) {
+              error(id, 'el subrubro "' + s + '" no pertenece al rubro "' + rubro + '"');
+            }
+          }
+        });
+        var tope = EU.catalogo.MAX_SUBRUBROS;
+        if (tope && subs.length > tope) {
+          error(id, 'tiene ' + subs.length + ' subrubros y el máximo configurado es ' + tope);
         }
         if (rubro === EU.catalogo.OTRO && !f.clasificacion.otroDetalle) {
           error(id, 'marcó "Otro" sin detallar qué vende');

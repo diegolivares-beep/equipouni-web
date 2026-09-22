@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Manrope:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..700&family=Manrope:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="assets/css/estilo.css">
 </head>
 <body data-titulo="Mi ficha">
@@ -106,14 +106,12 @@
               <option value="">Elige uno</option>
             </select>
           </div>
-          <div>
-            <label for="cla-subrubro">Subrubro
-              <span class="pista">Cambia según el rubro que elijas.</span>
-            </label>
-            <select id="cla-subrubro" name="cla-subrubro">
-              <option value="">Elige uno</option>
-            </select>
-          </div>
+        </div>
+        <div class="campo">
+          <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.3rem">Subrubros
+            <span class="pista">Dependen del rubro. Puedes marcar más de uno.</span>
+          </span>
+          <div id="zona-subrubros"></div>
         </div>
         <div class="campo" id="campo-otro" hidden>
           <label for="cla-otro">Cuéntanos qué vendes

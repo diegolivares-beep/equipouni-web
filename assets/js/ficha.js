@@ -109,7 +109,7 @@
   /* ---------- Clasificación dependiente ---------- */
 
   var selRubro = f.elements['cla-rubro'];
-  var selSubrubro = f.elements['cla-subrubro'];
+  var zonaSubrubros = document.getElementById('zona-subrubros');
   var zonaTipos = document.getElementById('zona-tipos');
   var campoOtro = document.getElementById('campo-otro');
 
@@ -118,19 +118,65 @@
     op.value = ru.id; op.textContent = ru.nombre;
     selRubro.appendChild(op);
   });
-  function poblarSubrubros(idRubro, valor) {
-    selSubrubro.innerHTML = '<option value="">Elige uno</option>';
-    EU.catalogo.subrubros(idRubro).forEach(function (s) {
-      var op = document.createElement('option');
-      op.value = s.id; op.textContent = s.nombre;
-      selSubrubro.appendChild(op);
-    });
-    selSubrubro.disabled = !EU.catalogo.subrubros(idRubro).length;
-    if (valor) selSubrubro.value = valor;
+  /* El brief pide "uno o varios subrubros", asi que van como casillas.
+     El tope sale de EU.catalogo.MAX_SUBRUBROS (0 = sin limite). */
+  function poblarSubrubros(idRubro, marcados) {
+    var lista = EU.catalogo.subrubros(idRubro);
+    marcados = marcados || [];
+    if (!lista.length) {
+      zonaSubrubros.innerHTML = idRubro === EU.catalogo.OTRO
+        ? '<p class="pista">Este rubro no tiene subrubros: lo revisa una persona.</p>'
+        : '<p class="pista">Elige primero un rubro.</p>';
+      return;
+    }
+    var tope = EU.catalogo.MAX_SUBRUBROS;
+    zonaSubrubros.innerHTML =
+      '<p class="pista" style="margin:.2rem 0 .5rem">Marca todos los que correspondan' +
+      (tope ? ', hasta ' + tope : '') + ':</p>' +
+      lista.map(function (s) {
+        var con = marcados.indexOf(s.id) !== -1 ? ' checked' : '';
+        return '<label class="casilla"><input type="checkbox" name="cla-subrubros" value="' +
+          esc(s.id) + '"' + con + '><span>' + esc(s.nombre) + '</span></label>';
+      }).join('') +
+      '<p class="mensaje-form" id="aviso-subrubros" style="min-height:0"></p>';
   }
 
-  function poblarTipos(idSubrubro, marcados) {
-    var tipos = EU.catalogo.tipos(idSubrubro);
+  function subrubrosMarcados() {
+    return Array.prototype.map.call(
+      f.querySelectorAll('[name="cla-subrubros"]:checked'),
+      function (c) { return c.value; });
+  }
+
+  /* Al marcar subrubros se rearman los tipos de producto de todos ellos,
+     conservando lo que el emprendedor ya tenia marcado. */
+  function alCambiarSubrubros() {
+    var marcados = subrubrosMarcados();
+    var tope = EU.catalogo.MAX_SUBRUBROS;
+    var aviso = document.getElementById('aviso-subrubros');
+    if (tope && marcados.length > tope) {
+      if (aviso) {
+        aviso.textContent = 'Puedes marcar hasta ' + tope + '.';
+        aviso.className = 'mensaje-form mensaje-form--error';
+      }
+    } else if (aviso) {
+      aviso.textContent = ''; aviso.className = 'mensaje-form';
+    }
+    poblarTipos(marcados, tiposMarcados());
+  }
+
+  function tiposMarcados() {
+    return Array.prototype.map.call(
+      f.querySelectorAll('[name="cla-tipos"]:checked'),
+      function (c) { return c.value; });
+  }
+
+  function poblarTipos(idsSubrubro, marcados) {
+    var tipos = [];
+    (idsSubrubro || []).forEach(function (id) {
+      EU.catalogo.tipos(id).forEach(function (x) {
+        if (tipos.indexOf(x) === -1) tipos.push(x);
+      });
+    });
     if (!tipos.length) { zonaTipos.innerHTML = ''; return; }
     zonaTipos.innerHTML = '<p class="pista" style="margin:.2rem 0 .5rem">' +
       'Marca los tipos de producto que vendes:</p>' +
@@ -151,20 +197,19 @@
   selRubro.addEventListener('change', function () {
     var v = selRubro.value;
     campoOtro.hidden = v !== EU.catalogo.OTRO;
-    poblarSubrubros(v, '');
+    poblarSubrubros(v, []);
     zonaTipos.innerHTML = '';
     mostrarAvisoRubro(v);
   });
-  selSubrubro.addEventListener('change', function () {
-    poblarTipos(selSubrubro.value, []);
-  });
+  zonaSubrubros.addEventListener('change', alCambiarSubrubros);
 
   /* Estado inicial de la clasificación */
   selRubro.value = ficha.clasificacion.rubro;
   campoOtro.hidden = ficha.clasificacion.rubro !== EU.catalogo.OTRO;
   f.elements['cla-otro'].value = ficha.clasificacion.otroDetalle || '';
-  poblarSubrubros(ficha.clasificacion.rubro, ficha.clasificacion.subrubro);
-  poblarTipos(ficha.clasificacion.subrubro, ficha.clasificacion.tipos);
+  var subsIniciales = EU.catalogo.subrubrosDe(ficha.clasificacion);
+  poblarSubrubros(ficha.clasificacion.rubro, subsIniciales);
+  poblarTipos(subsIniciales, ficha.clasificacion.tipos);
   mostrarAvisoRubro(ficha.clasificacion.rubro);
 
   /* ---------- Productos y formalización ---------- */
@@ -197,6 +242,16 @@
   f.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!f.checkValidity()) { f.reportValidity(); return; }
+    var subs = subrubrosMarcados();
+    var tope = EU.catalogo.MAX_SUBRUBROS;
+    if (selRubro.value && selRubro.value !== EU.catalogo.OTRO && !subs.length) {
+      avisar('Marca al menos un subrubro: es lo que usan las oportunidades para encontrarte.', true);
+      return;
+    }
+    if (tope && subs.length > tope) {
+      avisar('Puedes marcar hasta ' + tope + ' subrubros.', true);
+      return;
+    }
     if (selRubro.value === EU.catalogo.OTRO && !f.elements['cla-otro'].value.trim()) {
       avisar('Si marcas "Otro", cuéntanos en una línea qué vendes.', true);
       f.elements['cla-otro'].focus();

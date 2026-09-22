@@ -43,8 +43,8 @@ EU.datos.emprendedores = [
       web: ''
     },
     clasificacion: {
-      rubro: 'artesania',
-      subrubro: 'telar-tejido',
+      rubro: 'tejido-confeccion',
+      subrubros: ['telar-tejido', 'fieltro'],
       tipos: ['Telar', 'Fieltro'],
       otroDetalle: ''
     },
@@ -79,7 +79,7 @@ EU.datos.emprendedores = [
       descripcion: 'Vajilla y macetas de greda torneadas a mano, con esmaltes sin plomo.',
       instagram: 'https://instagram.com/gredaviva.ejemplo', web: ''
     },
-    clasificacion: { rubro: 'artesania', subrubro: 'ceramica', tipos: ['Vajilla', 'Macetas'], otroDetalle: '' },
+    clasificacion: { rubro: 'artesania', subrubros: ['ceramica'], tipos: ['Vajilla', 'Macetas'], otroDetalle: '' },
     productos: { fotos: ['feria-greda.jpg'], personaliza: false, detallePersonaliza: '' },
     formalizacion: { inicioActividades: true, boleta: true, patente: true, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {}
@@ -100,7 +100,7 @@ EU.datos.emprendedores = [
       descripcion: 'Mermeladas y conservas de fruta del valle de Elqui, en frascos reutilizables.',
       instagram: 'https://instagram.com/dulcetinaja.ejemplo', web: ''
     },
-    clasificacion: { rubro: 'alimentos-bebidas', subrubro: 'conservas', tipos: ['Mermeladas', 'Miel'], otroDetalle: '' },
+    clasificacion: { rubro: 'alimentos-bebidas', subrubros: ['conservas', 'pasteleria'], tipos: ['Mermeladas', 'Miel'], otroDetalle: '' },
     productos: { fotos: ['feria-alimentos.jpg'], personaliza: false, detallePersonaliza: '' },
     formalizacion: { inicioActividades: true, boleta: true, patente: false, resolucionSanitaria: true, personalidadJuridica: false },
     observaciones: {}
@@ -121,7 +121,7 @@ EU.datos.emprendedores = [
       descripcion: 'Billeteras, cinturones y bolsos de cuero cosidos a mano.',
       instagram: 'https://instagram.com/cardumencuero.ejemplo', web: ''
     },
-    clasificacion: { rubro: 'artesania', subrubro: 'cuero', tipos: ['Billeteras', 'Cinturones'], otroDetalle: '' },
+    clasificacion: { rubro: 'artesania', subrubros: ['cuero'], tipos: ['Billeteras', 'Cinturones'], otroDetalle: '' },
     productos: { fotos: ['feria-joyas.jpg'], personaliza: true, detallePersonaliza: 'Grabado de iniciales.' },
     formalizacion: { inicioActividades: true, boleta: false, patente: false, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {}
@@ -142,7 +142,7 @@ EU.datos.emprendedores = [
       descripcion: 'Jabones artesanales de caléndula, avena y algas, en barra y líquidos.',
       instagram: 'https://instagram.com/jabonesdelfaro.ejemplo', web: ''
     },
-    clasificacion: { rubro: 'belleza-cuidado', subrubro: 'jabones-bano', tipos: ['Jabón artesanal', 'Exfoliantes'], otroDetalle: '' },
+    clasificacion: { rubro: 'belleza-cuidado', subrubros: ['jabones-bano'], tipos: ['Jabón artesanal', 'Exfoliantes'], otroDetalle: '' },
     productos: { fotos: ['feria-flores.jpg'], personaliza: false, detallePersonaliza: '' },
     formalizacion: { inicioActividades: true, boleta: true, patente: false, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {}
@@ -163,7 +163,7 @@ EU.datos.emprendedores = [
       descripcion: 'Gorros, bufandas y ropa de guagua tejida a palillo y crochet.',
       instagram: '', web: ''
     },
-    clasificacion: { rubro: 'artesania', subrubro: 'telar-tejido', tipos: ['Tejido a palillo o crochet'], otroDetalle: '' },
+    clasificacion: { rubro: 'tejido-confeccion', subrubros: ['telar-tejido'], tipos: ['Crochet'], otroDetalle: '' },
     productos: { fotos: ['feria-textil.jpg'], personaliza: true, detallePersonaliza: 'Tallas y colores a pedido.' },
     formalizacion: { inicioActividades: false, boleta: false, patente: false, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {}
@@ -184,7 +184,7 @@ EU.datos.emprendedores = [
       descripcion: 'Café de grano tostado en Coquimbo, en bolsas de 250 g y venta preparada.',
       instagram: 'https://instagram.com/cafepeumo.ejemplo', web: ''
     },
-    clasificacion: { rubro: 'alimentos-bebidas', subrubro: 'cafe-te', tipos: ['Café de grano', 'Café preparado'], otroDetalle: '' },
+    clasificacion: { rubro: 'alimentos-bebidas', subrubros: ['cafe-te'], tipos: ['Café de grano', 'Café preparado'], otroDetalle: '' },
     productos: { fotos: ['feria-pan.jpg'], personaliza: false, detallePersonaliza: '' },
     formalizacion: { inicioActividades: true, boleta: true, patente: false, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {}
@@ -206,7 +206,7 @@ EU.datos.emprendedores = [
       instagram: 'https://instagram.com/fotogeniasur.ejemplo', web: ''
     },
     /* Marcó "Otro": queda en revisión humana según la regla del catálogo. */
-    clasificacion: { rubro: 'otro', subrubro: '', tipos: [], otroDetalle: 'Fotografía comercial y cobertura de eventos' },
+    clasificacion: { rubro: 'otro', subrubros: [], tipos: [], otroDetalle: 'Fotografía comercial y cobertura de eventos' },
     productos: { fotos: ['feria-arte.jpg'], personaliza: false, detallePersonaliza: '' },
     formalizacion: { inicioActividades: true, boleta: true, patente: false, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {}
@@ -227,7 +227,7 @@ EU.datos.emprendedores = [
       descripcion: 'Suculentas, plantas de interior y macramé para colgarlas.',
       instagram: 'https://instagram.com/verdementa.ejemplo', web: ''
     },
-    clasificacion: { rubro: 'deco-hogar', subrubro: 'plantas', tipos: ['Suculentas', 'Plantas de interior'], otroDetalle: '' },
+    clasificacion: { rubro: 'plantas-naturales', subrubros: ['plantas'], tipos: ['Suculentas', 'Plantas de interior'], otroDetalle: '' },
     productos: { fotos: ['feria-flores.jpg'], personaliza: false, detallePersonaliza: '' },
     formalizacion: { inicioActividades: false, boleta: false, patente: false, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {}
@@ -248,7 +248,7 @@ EU.datos.emprendedores = [
       descripcion: 'Miel de flora nativa del Choapa, en formatos de 250 g a 1 kg.',
       instagram: '', web: ''
     },
-    clasificacion: { rubro: 'alimentos-bebidas', subrubro: 'conservas', tipos: ['Miel'], otroDetalle: '' },
+    clasificacion: { rubro: 'alimentos-bebidas', subrubros: ['conservas'], tipos: ['Miel'], otroDetalle: '' },
     productos: { fotos: ['feria-alimentos.jpg'], personaliza: false, detallePersonaliza: '' },
     formalizacion: { inicioActividades: true, boleta: false, patente: false, resolucionSanitaria: false, personalidadJuridica: false },
     observaciones: {

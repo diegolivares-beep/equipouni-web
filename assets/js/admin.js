@@ -112,7 +112,8 @@ EU.admin = {
     var c = ficha.clasificacion;
     if (c.rubro === EU.catalogo.OTRO) return 'Otro: ' + (c.otroDetalle || 'sin detalle');
     var t = EU.catalogo.nombre(c.rubro);
-    if (c.subrubro) t += ' · ' + EU.catalogo.nombre(c.subrubro);
+    var subs = EU.catalogo.nombresSubrubros(c);
+    if (subs.length) t += ' · ' + subs.join(', ');
     return t;
   },
 

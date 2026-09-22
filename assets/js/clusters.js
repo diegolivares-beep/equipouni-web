@@ -46,20 +46,29 @@ EU.clusters = {
     var rubrosBuscados = oportunidad.rubrosBuscados || [];
     var subrubrosBuscados = oportunidad.subrubrosBuscados || [];
     var rubro = ficha.clasificacion.rubro;
-    var subrubro = ficha.clasificacion.subrubro;
+    var subrubros = EU.catalogo.subrubrosDe(ficha.clasificacion);
+
+    /* Con varios subrubros basta que UNO calce con los priorizados:
+       si el emprendimiento hace telar y fieltro y la feria busca telar,
+       es coincidencia directa. */
+    var calzan = subrubros.filter(function (s) {
+      return subrubrosBuscados.indexOf(s) !== -1;
+    });
 
     var nombreRubro = EU.catalogo.nombre(rubro);
-    var nombreSubrubro = subrubro ? EU.catalogo.nombre(subrubro) : '';
+    var nombresSub = EU.catalogo.nombresSubrubros(ficha.clasificacion);
 
     /* 2. Oportunidad abierta a todos los rubros: toda ficha validada calza. */
     if (!rubrosBuscados.length) {
       return { cluster: C.DIRECTA, razon: 'La oportunidad está abierta a todos los rubros.' };
     }
 
-    /* 3. El subrubro está entre los priorizados: coincidencia directa. */
-    if (subrubro && subrubrosBuscados.indexOf(subrubro) !== -1) {
+    /* 3. Alguno de sus subrubros está entre los priorizados. */
+    if (calzan.length) {
+      var nombresCalzan = calzan.map(function (s) { return EU.catalogo.nombre(s); });
       return { cluster: C.DIRECTA,
-        razon: nombreSubrubro + ' está entre los subrubros priorizados.' };
+        razon: (nombresCalzan.length === 1 ? nombresCalzan[0] + ' está' : nombresCalzan.join(' y ') + ' están') +
+               ' entre los subrubros priorizados.' };
     }
 
     /* 4. El rubro calza pero el subrubro no es de los priorizados. */
@@ -70,8 +79,8 @@ EU.clusters = {
       }
       return { cluster: C.PARCIAL,
         razon: nombreRubro + ' está entre los rubros buscados, pero ' +
-          (nombreSubrubro ? nombreSubrubro.toLowerCase() : 'su subrubro') +
-          ' no es de los priorizados.' };
+          (nombresSub.length ? nombresSub.join(' y ').toLowerCase() : 'su especialidad') +
+          ' no ' + (nombresSub.length > 1 ? 'son' : 'es') + ' de los priorizados.' };
     }
 
     /* 5. Rubro fuera del perfil: aporta variedad. */
