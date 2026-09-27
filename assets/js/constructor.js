@@ -10,7 +10,7 @@
    y la marca de filtro administrativo.
    ============================================================ */
 
-(function () {
+EU.alEstarListo(function () {
   'use strict';
 
   var esc = EU.util.esc;
@@ -52,6 +52,18 @@
     op.value = s; op.textContent = EU.estados.oportunidadInfo[s].etiqueta;
     selEstado.appendChild(op);
   });
+
+  /* El campo de fecha solo aparece cuando tiene sentido, y debajo del
+     selector se explica en una línea qué significa cada estado. */
+  function alCambiarEstado() {
+    var v = selEstado.value;
+    var campo = document.getElementById('campo-fecha-publicacion');
+    if (campo) campo.hidden = v !== 'programada';
+    var ayuda = document.getElementById('ayuda-estado');
+    var info = EU.estados.oportunidadInfo[v];
+    if (ayuda) ayuda.textContent = info && info.ayuda ? info.ayuda : '';
+  }
+  selEstado.addEventListener('change', alCambiarEstado);
 
   /* ---------- Bloque 3: perfil buscado con casillas dependientes ---------- */
 
@@ -165,6 +177,7 @@
       return;
     }
     pintarPreguntas();
+  alCambiarEstado();
   });
 
   /* Ediciones de texto y tipo se recogen al vuelo. */
@@ -213,6 +226,7 @@
     f.elements.asistencia.value = original.asistencia || '';
     f.elements.cancelacion.value = original.cancelacion || '';
     f.elements.estado.value = original.estado;
+    if (f.elements.fechaPublicacion) f.elements.fechaPublicacion.value = original.fechaPublicacion || '';
     f.elements.responsable.value = original.responsable || '';
     (original.rubrosBuscados || []).forEach(function (r) {
       var c = f.querySelector('[name="rubros"][value="' + r + '"]');
@@ -255,10 +269,87 @@
       mensaje.className = 'mensaje-form mensaje-form--error';
       return;
     }
-    mensaje.className = 'mensaje-form';
-    mensaje.textContent = (original ? 'Cambios válidos. ' : 'Oportunidad válida. ') +
-      'En la versión final esto se guardaría como "' +
-      EU.estados.oportunidadInfo[f.elements.estado.value].etiqueta.toLowerCase() +
-      '" con ' + preguntas.length + ' pregunta(s) particular(es).';
+    guardar(f.elements.estado.value);
   });
-})();
+
+  /* ---------- Guardar contra el backend ---------- */
+
+  function comoLineas(texto) {
+    return (texto || '').split('
+').map(function (l) { return l.trim(); })
+      .filter(function (l) { return l; });
+  }
+
+  function recoger(estado) {
+    return {
+      nombre: f.elements.nombre.value.trim(),
+      organizacion: f.elements.organizacion.value.trim(),
+      tipo: f.elements.tipo.value,
+      estado: estado,
+      fechaPublicacion: f.elements.fechaPublicacion ? f.elements.fechaPublicacion.value : '',
+      region: (f.elements.comuna.value || '').slice(0, 2),
+      comuna: f.elements.comuna.value,
+      direccion: f.elements.direccion.value.trim(),
+      lugar: f.elements.direccion.value.trim(),
+      descripcion: f.elements.descripcion.value.trim(),
+      fechaInicio: f.elements.fechaInicio.value,
+      fechaTermino: f.elements.fechaTermino.value,
+      horario: f.elements.horario.value.trim(),
+      cupos: Number(f.elements.cupos.value) || 0,
+      cuposDisponibles: original ? original.cuposDisponibles : Number(f.elements.cupos.value) || 0,
+      valor: Number(f.elements.valor.value) || 0,
+      cierrePostulacion: f.elements.cierrePostulacion.value,
+      queIncluye: comoLineas(f.elements.queIncluye.value),
+      requisitos: comoLineas(f.elements.requisitos.value),
+      plazoPago: f.elements.plazoPago.value.trim(),
+      asistencia: f.elements.asistencia.value.trim(),
+      cancelacion: f.elements.cancelacion.value.trim(),
+      rubrosBuscados: Array.prototype.map.call(
+        f.querySelectorAll('[name="rubros"]:checked'), function (c) { return c.value; }),
+      subrubrosBuscados: Array.prototype.map.call(
+        f.querySelectorAll('[name="subrubros"]:checked'), function (c) { return c.value; }),
+      imagenAlt: original ? original.imagenAlt : '',
+      preguntas: preguntas.filter(function (q) { return q.texto.trim(); }),
+      responsable: f.elements.responsable.value.trim(),
+      orden: original ? original.orden : 0
+    };
+  }
+
+  function guardar(estado) {
+    if (estado === 'programada' && (!f.elements.fechaPublicacion || !f.elements.fechaPublicacion.value)) {
+      mensaje.className = 'mensaje-form mensaje-form--error';
+      mensaje.textContent = 'Para programar hay que indicar la fecha de publicación.';
+      return;
+    }
+    var cuerpo = EU.modelo.oportunidadHaciaBase(recoger(estado));
+    mensaje.className = 'mensaje-form';
+    mensaje.textContent = 'Guardando…';
+
+    var accion = original
+      ? EU.api.actualizar('oportunidades', original.id, cuerpo)
+      : EU.api.crear('oportunidades', cuerpo);
+
+    accion.then(function (r) {
+      var etiqueta = EU.estados.oportunidadInfo[estado].etiqueta.toLowerCase();
+      location.href = 'admin-oportunidades.html?guardada=' + encodeURIComponent(etiqueta);
+    }).catch(function (err) {
+      mensaje.className = 'mensaje-form mensaje-form--error';
+      mensaje.textContent = err.message || 'No se pudo guardar.';
+    });
+  }
+
+  /* Botones de publicación: lo que pidió el cliente, un botón por acción
+     en vez de tener que entender un selector de estados. */
+  var barra = document.getElementById('acciones-publicacion');
+  if (barra) {
+    barra.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-publicar]');
+      if (!b) return;
+      e.preventDefault();
+      if (!f.checkValidity()) { f.reportValidity(); return; }
+      var estado = b.getAttribute('data-publicar');
+      f.elements.estado.value = estado;
+      guardar(estado);
+    });
+  }
+});

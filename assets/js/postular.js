@@ -15,7 +15,7 @@
    los datos de la ficha en ese momento.
    ============================================================ */
 
-(function () {
+EU.alEstarListo(function () {
   'use strict';
 
   var esc = EU.util.esc;
@@ -143,8 +143,33 @@
       return;
     }
 
+    var respuestas = {};
+    (o.preguntas || []).forEach(function (q) {
+      var marcadas = Array.prototype.map.call(
+        form.querySelectorAll('[name="' + q.id + '"]:checked'),
+        function (c) { return c.value; });
+      respuestas[q.id] = q.tipo === 'varias' ? marcadas : marcadas[0];
+    });
+
+    var boton = form.querySelector('button[type="submit"]');
+    boton.disabled = true;
+    boton.textContent = 'Enviando…';
     mensaje.className = 'mensaje-form';
-    mensaje.textContent = 'Postulación válida. En la versión final quedaría registrada ' +
-      'como "Postulado", junto con una copia de tu ficha de hoy, y la verías en Mis postulaciones.';
+    mensaje.textContent = '';
+
+    /* El estado, la fecha y el historial los pone el backend: así nadie
+       puede postular ya "seleccionado" ni falsear la fecha. */
+    EU.api.crear('postulaciones', {
+      oportunidad: o.id,
+      ficha: ficha.id,
+      respuestas: respuestas
+    }).then(function () {
+      location.href = 'cuenta-postulaciones.html?enviada=1';
+    }).catch(function (err) {
+      boton.disabled = false;
+      boton.textContent = 'Enviar postulación';
+      mensaje.className = 'mensaje-form mensaje-form--error';
+      mensaje.textContent = err.message || 'No se pudo enviar la postulación.';
+    });
   });
-})();
+});

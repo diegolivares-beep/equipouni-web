@@ -65,20 +65,28 @@ EU.estados = {
   },
 
   /* ---------- Oportunidad ---------- */
+  /* Los cuatro que pidió el cliente, más "cancelada" para poder avisar
+     cuando un evento se suspende. "Cerrada" no está: se deduce de la
+     fecha de cierre, así nadie tiene que ir cerrando a mano. */
   oportunidad: {
-    BORRADOR:     'borrador',
-    VISTA_PREVIA: 'vista_previa',
-    PUBLICADA:    'publicada',
-    CERRADA:      'cerrada',
-    CANCELADA:    'cancelada'
+    BORRADOR:   'borrador',
+    OCULTA:     'oculta',
+    PROGRAMADA: 'programada',
+    PUBLICADA:  'publicada',
+    CANCELADA:  'cancelada'
   },
 
   oportunidadInfo: {
-    borrador:     { etiqueta: 'Borrador',     publica: false, recibePostulaciones: false },
-    vista_previa: { etiqueta: 'Vista previa', publica: false, recibePostulaciones: false },
-    publicada:    { etiqueta: 'Publicada',    publica: true,  recibePostulaciones: true },
-    cerrada:      { etiqueta: 'Cerrada',      publica: true,  recibePostulaciones: false },
-    cancelada:    { etiqueta: 'Cancelada',    publica: true,  recibePostulaciones: false }
+    borrador:   { etiqueta: 'Borrador',   publica: false, recibePostulaciones: false,
+                  ayuda: 'Se está armando. No la ve nadie más que tú.' },
+    oculta:     { etiqueta: 'Oculta',     publica: false, recibePostulaciones: false,
+                  ayuda: 'Estaba lista y la bajaste del sitio. Se puede volver a publicar.' },
+    programada: { etiqueta: 'Programada', publica: false, recibePostulaciones: false,
+                  ayuda: 'Se publica sola en la fecha que indiques.' },
+    publicada:  { etiqueta: 'Publicada',  publica: true,  recibePostulaciones: true,
+                  ayuda: 'Visible en el tablero y recibiendo postulaciones.' },
+    cancelada:  { etiqueta: 'Cancelada',  publica: true,  recibePostulaciones: false,
+                  ayuda: 'Se suspendió. Sigue visible para avisarle a quien postuló.' }
   },
 
   /* ---------- Postulación ---------- */

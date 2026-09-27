@@ -11,9 +11,17 @@
 
 window.EU = window.EU || {};
 
+/* La sesión es la real: viene del backend a través de EU.api.
+   EU.sesion.ficha() devuelve la ficha del usuario conectado, que
+   EU.arranque dejó cargada al abrir la página. */
 EU.sesion = {
-  emprendedor: 'emp-demo',
-  ficha: function () { return EU.datos.emprendedor(EU.sesion.emprendedor); }
+  get emprendedor() {
+    var f = EU.sesion.ficha();
+    return f ? f.id : null;
+  },
+  ficha: function () { return EU.sesion.ficha_ || null; },
+  usuario: function () { return EU.api.usuario(); },
+  tieneFicha: function () { return !!EU.sesion.ficha_; }
 };
 
 EU.cuenta = {
@@ -30,6 +38,7 @@ EU.cuenta = {
     var esc = EU.util.esc;
     var actual = EU.ui.paginaActual();
     var ficha = EU.sesion.ficha();
+    var usuario = EU.api.usuario() || {};
 
     var enlaces = EU.cuenta.MENU.map(function (m) {
       var activo = m.archivo === actual ? ' aria-current="page"' : '';
@@ -37,10 +46,10 @@ EU.cuenta = {
     }).join('');
 
     var aviso = '';
-    if (EU.marca.esMaqueta) {
-      aviso = '<div class="demo"><div class="envoltura"><p>Área privada de demostración: ' +
-        'estás navegando la cuenta de ' + esc(ficha.representante.nombre) + ' (' +
-        esc(ficha.emprendimiento.nombre) + '). Los cambios no se guardan.</p></div></div>';
+    if (ficha && ficha.estado !== 'validada') {
+      var info = EU.estados.info('ficha', ficha.estado);
+      aviso = '<div class="demo"><div class="envoltura"><p>Tu ficha está ' +
+        esc(info.etiqueta.toLowerCase()) + ': ' + esc(info.descripcion) + '</p></div></div>';
     }
 
     return aviso +
@@ -48,7 +57,10 @@ EU.cuenta = {
         EU.ui.logotipo() +
         '<nav aria-label="Área privada"><ul class="menu">' + enlaces + '</ul></nav>' +
         '<div class="cabecera__acciones">' +
-          '<a class="enlace-sesion" href="index.html">Cerrar sesión</a>' +
+          (EU.api.esAdmin() ? '<a class="enlace-sesion" href="admin.html">Panel</a>' : '') +
+          '<span class="enlace-sesion" style="border:0;cursor:default">' +
+            esc((usuario.nombre || usuario.email || '').split(' ')[0]) + '</span>' +
+          '<a class="boton boton--linea" href="#" id="salir">Cerrar sesión</a>' +
         '</div>' +
       '</div></header>';
   },
@@ -60,6 +72,7 @@ EU.cuenta = {
     if (abajo) abajo.innerHTML = EU.ui.pie();
     var propio = document.body.getAttribute('data-titulo');
     if (propio) document.title = propio + ' | ' + EU.marca.nombre;
+    EU.ui.conectarSalir();
   },
 
   /* Etiqueta con el estado de la ficha, con el tono que corresponde. */

@@ -61,42 +61,36 @@ EU.admin = {
   /* Cambia el estado de una postulación respetando las transiciones.
      Devuelve { ok, error }. Registra el paso en el historial, y para
      "renuncio" conserva el estado anterior, como exige la especificación. */
+  /* Devuelve una promesa: el cambio lo aplica el backend, que además
+     vuelve a verificar la transición aunque acá ya se haya revisado. */
   cambiarEstado: function (idPostulacion, nuevoEstado) {
     var p = EU.datos.postulacion(idPostulacion);
-    if (!p) return { ok: false, error: 'No existe la postulación.' };
-    if (p.estado === nuevoEstado) return { ok: false, error: 'Ya está en ese estado.' };
+    if (!p) return Promise.reject(new Error('No existe la postulación.'));
+    if (p.estado === nuevoEstado) return Promise.reject(new Error('Ya está en ese estado.'));
     if (!EU.estados.puedeTransitar(p.estado, nuevoEstado)) {
-      return { ok: false, error: 'No se puede pasar de "' +
+      return Promise.reject(new Error('No se puede pasar de "' +
         EU.estados.etiqueta('postulacion', p.estado) + '" a "' +
-        EU.estados.etiqueta('postulacion', nuevoEstado) + '".' };
+        EU.estados.etiqueta('postulacion', nuevoEstado) + '".'));
     }
-    var hoy = new Date();
-    var fecha = hoy.getFullYear() + '-' +
-      String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
-      String(hoy.getDate()).padStart(2, '0');
-    var paso = { fecha: fecha, a: nuevoEstado };
-    if (nuevoEstado === EU.estados.postulacion.RENUNCIO) {
-      paso.desde = p.estado;
-      p.estadoAnterior = p.estado;
-    }
-    p.historial.push(paso);
-    p.estado = nuevoEstado;
-    return { ok: true };
+    return EU.api.actualizar('postulaciones', idPostulacion, { estado: nuevoEstado })
+      .then(function (r) {
+        var actualizada = EU.modelo.postulacionDesdeBase(r);
+        for (var k in actualizada) p[k] = actualizada[k];
+        return p;
+      });
   },
 
   /* Cambia el estado de una ficha (validar o pedir corrección). */
   resolverFicha: function (idFicha, decision, observacion) {
-    var f = EU.datos.emprendedor(idFicha);
-    if (!f) return { ok: false, error: 'No existe la ficha.' };
-    if (decision === 'validar') {
-      f.estado = EU.estados.ficha.VALIDADA;
-      f.observaciones = {};
-    } else {
-      f.estado = EU.estados.ficha.CORRECCION;
-      f.observaciones = f.observaciones || {};
-      f.observaciones.general = observacion || 'Revisar antecedentes.';
-    }
-    return { ok: true };
+    var cuerpo = decision === 'validar'
+      ? { estado: 'validada', observaciones: {} }
+      : { estado: 'correccion', observaciones: { general: observacion || 'Revisar antecedentes.' } };
+    return EU.api.actualizar('fichas', idFicha, cuerpo).then(function (r) {
+      var f = EU.datos.emprendedor(idFicha);
+      var nueva = EU.modelo.fichaDesdeBase(r);
+      if (f) { f.estado = nueva.estado; f.observaciones = nueva.observaciones; }
+      return nueva;
+    });
   },
 
   /* ---------- Piezas de interfaz ---------- */
@@ -129,7 +123,8 @@ EU.admin = {
     if (ficha.formalizacion.personalidadJuridica) docs.push('Personalidad jurídica');
 
     var fotos = (ficha.productos.fotos || []).map(function (fo) {
-      return '<img src="assets/img/' + esc(fo) + '" alt="Producto de ' +
+      var url = fo && fo.miniatura ? fo.miniatura : (fo && fo.url) || ('assets/img/' + fo);
+      return '<img src="' + esc(url) + '" alt="Producto de ' +
         esc(em.nombre) + '" width="160" height="120" loading="lazy">';
     }).join('');
 

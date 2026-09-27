@@ -70,6 +70,18 @@ EU.util = {
     return '$' + Number(n).toLocaleString('es-CL');
   },
 
+  /* La imagen puede venir del backend (URL completa) o ser una de las
+     que vinieron con el sitio. Una sola función decide, así no hay que
+     acordarse en cada pantalla. */
+  urlImagen: function (o, miniatura) {
+    if (!o) return '';
+    if (o.imagen && /^https?:\/\//.test(o.imagen)) {
+      return miniatura ? o.imagen + '?thumb=' + miniatura : o.imagen;
+    }
+    if (o.imagen) return 'assets/img/' + o.imagen;
+    return 'assets/img/' + (o.imagenLocal || 'feria-toldos.jpg');
+  },
+
   parametro: function (nombre) {
     var m = location.search.match(new RegExp('[?&]' + nombre + '=([^&]*)'));
     return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
@@ -96,8 +108,10 @@ EU.util = {
 
 EU.repo = {
 
-  /* Envoltura mínima para que las páginas no asuman que el dato es
-     inmediato. Cuando esto pase a fetch, solo cambia el interior. */
+  /* Los datos ya vienen cargados por EU.arranque cuando se abre la
+     página, así que acá siguen siendo inmediatos. Se mantiene la
+     envoltura porque las pantallas la usan y permite cambiar esto
+     por una consulta suelta el día que haga falta. */
   entonces: function (valor, hacer) { hacer(valor); },
 
   oportunidades: {
@@ -111,6 +125,7 @@ EU.repo = {
         var info = EU.estados.oportunidadInfo[o.estado];
         return info && info.publica;
       });
+      if (c.soloAdmin) lista = (EU.datos.oportunidades || []).slice();
 
       if (c.tipo)   lista = lista.filter(function (o) { return o.tipo === c.tipo; });
       if (c.comuna) lista = lista.filter(function (o) { return o.comuna === c.comuna; });
@@ -216,20 +231,31 @@ EU.ui = {
 
     var aviso = '';
     if (EU.marca.esMaqueta) {
-      aviso = '<div class="demo"><div class="envoltura"><p>Maqueta de revisión. ' +
-        'Las oportunidades, las organizaciones y los datos de contacto son de ejemplo.' +
-        '</p></div></div>';
+      aviso = '<div class="demo"><div class="envoltura"><p>' +
+        EU.util.esc(EU.marca.avisoEjemplo || '') + '</p></div></div>';
     }
 
     return aviso +
       '<header class="cabecera"><div class="envoltura">' +
         EU.ui.logotipo() +
         '<nav aria-label="Principal"><ul class="menu">' + enlaces + '</ul></nav>' +
-        '<div class="cabecera__acciones">' +
-          '<a class="enlace-sesion" href="entrar.html">Iniciar sesión</a>' +
-          '<a class="boton" href="registro.html">Crear mi ficha</a>' +
-        '</div>' +
+        '<div class="cabecera__acciones">' + EU.ui.accionesSesion() + '</div>' +
       '</div></header>';
+  },
+
+  /* Lo que se muestra arriba a la derecha depende de quién esté mirando. */
+  accionesSesion: function () {
+    if (!window.EU.api || !EU.api.haySesion()) {
+      return '<a class="enlace-sesion" href="entrar.html">Iniciar sesión</a>' +
+             '<a class="boton" href="registro.html">Crear mi ficha</a>';
+    }
+    var u = EU.api.usuario();
+    var nombre = (u && (u.nombre || u.email) || '').split(' ')[0];
+    return (EU.api.esAdmin()
+              ? '<a class="enlace-sesion" href="admin.html">Panel</a>'
+              : '') +
+           '<a class="enlace-sesion" href="cuenta.html">' + EU.util.esc(nombre || 'Mi cuenta') + '</a>' +
+           '<a class="boton boton--linea" href="#" id="salir">Cerrar sesión</a>';
   },
 
   pie: function () {
@@ -275,6 +301,9 @@ EU.ui = {
   /* Etiqueta de estado de una oportunidad, desde el punto de vista de
      quien postula: lo que importa es si puede postular o no. */
   etiquetaEstado: function (o) {
+    if (o.estado === EU.estados.oportunidad.CANCELADA) {
+      return { clase: 'cerrada', texto: 'Cancelada' };
+    }
     if (!EU.estados.recibePostulaciones(o)) {
       return { clase: 'cerrada', texto: 'Postulaciones cerradas' };
     }
@@ -296,7 +325,7 @@ EU.ui = {
     return '' +
       '<li class="oportunidad">' +
         '<a class="oportunidad__foto" href="oportunidad.html?id=' + encodeURIComponent(o.id) + '" tabindex="-1" aria-hidden="true">' +
-          '<img src="assets/img/' + EU.util.esc(o.imagen) + '" alt="" width="180" height="135" loading="lazy" decoding="async">' +
+          '<img src="' + EU.util.esc(EU.util.urlImagen(o, '360x270')) + '" alt="" width="180" height="135" loading="lazy" decoding="async">' +
         '</a>' +
         '<div class="oportunidad__cuerpo">' +
           '<p class="fila-etiquetas">' +
@@ -338,6 +367,17 @@ EU.ui = {
     if (propio) document.title = propio + ' | ' + EU.marca.nombre;
 
     if (EU.marca.esMaqueta) document.documentElement.classList.add('es-maqueta');
+    EU.ui.conectarSalir();
+  },
+
+  conectarSalir: function () {
+    var b = document.getElementById('salir');
+    if (!b) return;
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      EU.api.salir();
+      location.href = 'index.html';
+    });
   },
 
   /* Cambia el título desde una página que lo sabe recién al cargar los

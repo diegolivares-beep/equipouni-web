@@ -25,20 +25,20 @@
 <script src="config/territorio.js"></script>
 <script src="config/catalogo.js"></script>
 <script src="config/estados.js"></script>
-<script src="data/oportunidades.js"></script>
-<script src="data/emprendedores.js"></script>
-<script src="data/postulaciones.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/modelo.js"></script>
 <script src="assets/js/nucleo.js"></script>
+<script src="assets/js/arranque.js"></script>
 <script src="assets/js/clusters.js"></script>
 <script src="assets/js/admin.js"></script>
 <script src="assets/js/exportar.js"></script>
 <script>
-EU.admin.montar();
+EU.arranque.admin(function () { EU.admin.montar(); });
 
 /* Pantalla administrativa de una oportunidad: postulantes agrupados por
    clúster, filtros, acciones masivas con transiciones validadas, y la
    ficha de cada postulante desplegable en su fila. */
-(function () {
+EU.alEstarListo(function () {
   'use strict';
   var esc = EU.util.esc;
   var pantalla = document.getElementById('pantalla');
@@ -217,23 +217,31 @@ EU.admin.montar();
       if (!accion) { mensajeLote = 'Elige una acción.'; render(); return; }
       if (!marcadas.length) { mensajeLote = 'Marca al menos una fila.'; render(); return; }
 
-      var hechas = 0, rechazos = [];
-      marcadas.forEach(function (pid) {
-        var r = EU.admin.cambiarEstado(pid, accion);
-        if (r.ok) { hechas += 1; } else {
-          var p = EU.datos.postulacion(pid);
-          var f = p ? EU.datos.emprendedor(p.emprendedor) : null;
-          rechazos.push((f ? f.emprendimiento.nombre : pid) + ': ' + r.error);
-        }
-      });
-      mensajeLote = hechas + ' cambio(s) aplicado(s).' +
-        (rechazos.length ? ' Rechazados: ' + rechazos.join(' · ') : '');
+      mensajeLote = 'Aplicando…';
       render();
+      var hechas = 0, rechazos = [];
+      /* Uno por uno y en orden: si alguno falla se informa cuál, en vez
+         de dejar el lote a medias sin explicación. */
+      marcadas.reduce(function (cadena, pid) {
+        return cadena.then(function () {
+          return EU.admin.cambiarEstado(pid, accion)
+            .then(function () { hechas += 1; })
+            .catch(function (err) {
+              var p = EU.datos.postulacion(pid);
+              var fi = p ? EU.datos.emprendedor(p.emprendedor) : null;
+              rechazos.push((fi ? fi.emprendimiento.nombre : pid) + ': ' + err.message);
+            });
+        });
+      }, Promise.resolve()).then(function () {
+        mensajeLote = hechas + ' cambio(s) aplicado(s).' +
+          (rechazos.length ? ' Rechazados: ' + rechazos.join(' · ') : '');
+        render();
+      });
     });
   }
 
   render();
-})();
+});
 </script>
 </body>
 </html>

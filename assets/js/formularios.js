@@ -1,78 +1,111 @@
 /* ============================================================
-   FORMULARIOS DE CUENTA (registro e inicio de sesión)
+   ENTRAR, CREAR CUENTA Y RECUPERAR CONTRASEÑA
    ------------------------------------------------------------
-   En la maqueta no hay backend: los formularios validan y avisan.
-   Cuando exista el sistema de cuentas, se conecta acá.
+   Contra el backend real. Tres cuidados que conviene no perder:
 
-   Reglas del registro que vienen de la especificación:
-   - Un correo corresponde a una cuenta de emprendedor.
-   - La ficha se completa después de crear la cuenta, y se puede
-     guardar incompleta y seguir en otro momento.
+   - El mensaje de error al entrar nunca dice si el correo existe o
+     si la contraseña está mala: decirlo permite averiguar qué correos
+     están registrados en la plataforma.
+   - El botón se bloquea mientras se envía, para no crear dos cuentas
+     con doble clic.
+   - Al registrarse se pide aceptar el tratamiento de datos, porque la
+     ficha guarda RUT y teléfono.
    ============================================================ */
 
-(function () {
+EU.alEstarListo(function () {
   'use strict';
 
-  var ENDPOINT = '';
-
-  var form = document.querySelector('form[data-form-cuenta]');
+  var form = document.getElementById('form-sesion');
   if (!form) return;
 
+  var esRegistro = form.getAttribute('data-modo') === 'registro';
   var mensaje = document.getElementById('mensaje-form');
-  var esRegistro = form.getAttribute('data-form-cuenta') === 'registro';
+  var boton = form.querySelector('button[type="submit"]');
+  var textoBoton = boton ? boton.textContent : '';
 
   function avisar(texto, esError) {
     mensaje.textContent = texto;
     mensaje.className = 'mensaje-form' + (esError ? ' mensaje-form--error' : '');
   }
 
+  function ocupado(si) {
+    if (!boton) return;
+    boton.disabled = si;
+    boton.textContent = si ? 'Un momento…' : textoBoton;
+  }
+
+  /* A dónde ir después de entrar: lo que venga en la dirección, y si no,
+     la cuenta. Solo se aceptan páginas del propio sitio. */
+  function destino() {
+    var v = EU.util.parametro('volver');
+    if (v && /^[a-z0-9-]+\.html(\?[^"'<>]*)?$/i.test(v)) return v;
+    return 'cuenta.html';
+  }
+
+  if (EU.api.haySesion()) {
+    location.href = destino();
+    return;
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    avisar('', false);
+    if (!form.checkValidity()) { form.reportValidity(); return; }
 
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      var primero = form.querySelector(':invalid');
-      if (primero) primero.focus();
-      return;
-    }
+    var correo = form.elements.correo.value.trim();
+    var clave = form.elements.clave.value;
 
     if (esRegistro) {
-      var clave = form.elements.clave.value;
-      var repite = form.elements.repite.value;
       if (clave.length < 8) {
         avisar('La contraseña necesita al menos 8 caracteres.', true);
-        form.elements.clave.focus();
         return;
       }
-      if (clave !== repite) {
-        avisar('Las contraseñas no coinciden.', true);
-        form.elements.repite.focus();
+      if (form.elements.clave2 && clave !== form.elements.clave2.value) {
+        avisar('Las dos contraseñas no coinciden.', true);
         return;
       }
-    }
-
-    if (!ENDPOINT) {
-      if (esRegistro) {
-        avisar('Formulario válido. En la versión final, desde aquí pasarías a completar tu ficha.', false);
-      } else {
-        /* Sin sistema de cuentas, entrar lleva al área privada de
-           demostración, para poder recorrer el flujo completo. */
-        avisar('Entrando a la cuenta de demostración…', false);
-        location.href = 'cuenta.html';
-      }
+      ocupado(true);
+      EU.api.registrar({
+        correo: correo,
+        clave: clave,
+        nombre: form.elements.nombre.value.trim(),
+        telefono: form.elements.telefono ? form.elements.telefono.value.trim() : ''
+      }).then(function () {
+        location.href = 'cuenta-ficha.html?nueva=1';
+      }).catch(function (err) {
+        ocupado(false);
+        avisar(err.message, true);
+      });
       return;
     }
 
-    /* Conexión real, cuando exista. */
-    fetch(ENDPOINT, { method: 'POST', body: new FormData(form) })
-      .then(function (r) {
-        if (!r.ok) throw new Error(r.status);
-        var volver = EU.util.parametro('volver');
-        location.href = volver || 'index.html';
-      })
+    ocupado(true);
+    EU.api.entrar(correo, clave)
+      .then(function () { location.href = destino(); })
       .catch(function () {
-        avisar('No se pudo conectar. Intenta de nuevo en un momento.', true);
+        ocupado(false);
+        /* Mensaje deliberadamente igual para correo inexistente y
+           contraseña equivocada. */
+        avisar('El correo o la contraseña no coinciden.', true);
       });
   });
-})();
+
+  /* Recuperar contraseña: el backend manda el enlace por correo. */
+  var recuperar = document.getElementById('recuperar');
+  if (recuperar) {
+    recuperar.addEventListener('click', function (e) {
+      e.preventDefault();
+      var correo = form.elements.correo.value.trim();
+      if (!correo) {
+        avisar('Escribe tu correo arriba y vuelve a tocar este enlace.', true);
+        form.elements.correo.focus();
+        return;
+      }
+      EU.api.pedirRecuperacion(correo).then(function () {
+        avisar('Si ese correo tiene cuenta, le llegará un enlace para cambiar la contraseña.');
+      }).catch(function () {
+        /* Se responde igual haya o no cuenta, para no revelar quién está registrado. */
+        avisar('Si ese correo tiene cuenta, le llegará un enlace para cambiar la contraseña.');
+      });
+    });
+  }
+});

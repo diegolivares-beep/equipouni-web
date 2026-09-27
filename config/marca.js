@@ -27,9 +27,13 @@ EU.marca = {
   descripcion: 'Red que conecta emprendedores con oportunidades para vender, ' +
     'con postulacion en un solo lugar y seguimiento del estado de cada una.',
 
-  /* Marca como no definitiva. Mientras sea true, el sitio muestra el
-     aviso de maqueta. Al publicar de verdad se pone en false. */
+  /* El sitio ya funciona de verdad: cuentas, fichas y postulaciones
+     quedan guardadas. Lo único de ejemplo son las oportunidades que
+     cargamos para que no naciera vacío; al reemplazarlas por las reales
+     esto pasa a false y desaparece el aviso de arriba. */
   esMaqueta: true,
+  avisoEjemplo: 'Las oportunidades publicadas son de ejemplo mientras cargamos las reales. ' +
+                'Las cuentas y las postulaciones sí funcionan y quedan guardadas.',
 
   contacto: {
     correo: 'contacto@equipouni.cl',

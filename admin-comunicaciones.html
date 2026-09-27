@@ -38,15 +38,15 @@
 <script src="config/territorio.js"></script>
 <script src="config/catalogo.js"></script>
 <script src="config/estados.js"></script>
-<script src="data/oportunidades.js"></script>
-<script src="data/emprendedores.js"></script>
-<script src="data/postulaciones.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/modelo.js"></script>
 <script src="assets/js/nucleo.js"></script>
+<script src="assets/js/arranque.js"></script>
 <script src="assets/js/clusters.js"></script>
 <script src="assets/js/admin.js"></script>
 <script>
-EU.admin.montar();
-(function () {
+EU.arranque.admin(function () { EU.admin.montar(); });
+EU.alEstarListo(function () {
   'use strict';
   var esc = EU.util.esc;
   var sel = document.getElementById('sel-oportunidad');
@@ -133,7 +133,7 @@ EU.admin.montar();
       'Lote revisado y listo. En la versión final, acá saldrían los correos y quedaría ' +
       'registrada la fecha de envío de cada uno.';
   });
-})();
+});
 </script>
 </body>
 </html>

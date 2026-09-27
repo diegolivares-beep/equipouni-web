@@ -12,11 +12,24 @@
      vivo al editar.
    ============================================================ */
 
-(function () {
+EU.alEstarListo(function () {
   'use strict';
 
   var esc = EU.util.esc;
-  var ficha = EU.sesion.ficha();
+  var usuario = EU.api.usuario();
+
+  /* Quien acaba de crear su cuenta todavía no tiene ficha: se arma una
+     en blanco para que el formulario tenga qué mostrar, y se crea en la
+     base al guardar por primera vez. */
+  var ficha = EU.sesion.ficha() || {
+    id: null, estado: 'incompleta',
+    representante: { nombre: usuario.nombre || '', rut: '', correo: usuario.email || '',
+                     telefono: usuario.telefono || '', comuna: '', contactoPreferido: 'whatsapp' },
+    emprendimiento: { nombre: '', comuna: '', anoInicio: '', descripcion: '', instagram: '' },
+    clasificacion: { rubro: '', subrubros: [], tipos: [], otroDetalle: '' },
+    productos: { fotos: [], personaliza: false, detallePersonaliza: '' },
+    formalizacion: {}, documentos: [], observaciones: {}
+  };
 
   /* Estado por sección: con observación pendiente es corrección; si no,
      hereda el estado global de la ficha. */
@@ -214,11 +227,7 @@
 
   /* ---------- Productos y formalización ---------- */
 
-  document.getElementById('fotos-actuales').innerHTML =
-    (ficha.productos.fotos || []).map(function (foto) {
-      return '<img src="assets/img/' + esc(foto) + '" alt="Fotografía de producto de ' +
-        esc(em.nombre) + '" width="160" height="120" loading="lazy">';
-    }).join('');
+  /* Las fotos se pintan con pintarFotos(), definida más abajo. */
 
   f.elements['pro-personaliza'].value = ficha.productos.personaliza ? 'si' : 'no';
   f.elements['pro-detalle'].value = ficha.productos.detallePersonaliza || '';
@@ -257,7 +266,136 @@
       f.elements['cla-otro'].focus();
       return;
     }
-    avisar('Ficha válida. En la versión final esto guardaría los cambios y las ' +
-      'secciones editadas quedarían en revisión.');
+    guardar();
   });
-})();
+
+  /* ---------- Guardar contra el backend ---------- */
+
+  var botonGuardar = f.querySelector('button[type="submit"]');
+  var textoGuardar = botonGuardar ? botonGuardar.textContent : '';
+
+  function recoger() {
+    return {
+      representante: {
+        nombre: f.elements['rep-nombre'].value.trim(),
+        rut: f.elements['rep-rut'].value.trim(),
+        telefono: f.elements['rep-telefono'].value.trim(),
+        comuna: f.elements['rep-comuna'].value,
+        contactoPreferido: f.elements['rep-contacto'].value
+      },
+      emprendimiento: {
+        nombre: f.elements['emp-nombre'].value.trim(),
+        comuna: f.elements['emp-comuna'].value,
+        anoInicio: f.elements['emp-ano'].value,
+        descripcion: f.elements['emp-descripcion'].value.trim(),
+        instagram: f.elements['emp-instagram'].value.trim()
+      },
+      clasificacion: {
+        rubro: selRubro.value,
+        subrubros: subrubrosMarcados(),
+        tipos: tiposMarcados(),
+        otroDetalle: f.elements['cla-otro'].value.trim()
+      },
+      productos: {
+        personaliza: f.elements['pro-personaliza'].value === 'si',
+        detallePersonaliza: f.elements['pro-detalle'].value.trim()
+      },
+      formalizacion: {
+        inicioActividades: f.elements['for-inicioActividades'].checked,
+        boleta: f.elements['for-boleta'].checked,
+        patente: f.elements['for-patente'].checked,
+        resolucionSanitaria: f.elements['for-resolucionSanitaria'].checked,
+        personalidadJuridica: f.elements['for-personalidadJuridica'].checked
+      }
+    };
+  }
+
+  function ocupado(si) {
+    if (!botonGuardar) return;
+    botonGuardar.disabled = si;
+    botonGuardar.textContent = si ? 'Guardando…' : textoGuardar;
+  }
+
+  function guardar() {
+    ocupado(true);
+    var cuerpo = EU.modelo.fichaHaciaBase(recoger());
+    var accion = ficha.id
+      ? EU.api.actualizar('fichas', ficha.id, cuerpo)
+      : EU.api.crear('fichas', Object.assign({ usuario: usuario.id, estado: 'pendiente' }, cuerpo));
+
+    accion.then(function (r) {
+      ficha.id = r.id;
+      return subirPendientes(r.id);
+    }).then(function () {
+      return EU.arranque.recargarMiFicha();
+    }).then(function (nueva) {
+      ocupado(false);
+      var estado = nueva ? EU.estados.etiqueta('ficha', nueva.estado).toLowerCase() : 'guardada';
+      avisar('Listo, tu ficha quedó guardada y está ' + estado + '.');
+      if (nueva) {
+        ficha = nueva;
+        document.getElementById('estado-ficha').innerHTML =
+          EU.cuenta.etiquetaFicha(nueva.estado) +
+          ' <span style="font-size:.9rem;color:var(--tinta-2)">' +
+          esc(EU.estados.info('ficha', nueva.estado).descripcion) + '</span>';
+        pintarFotos(nueva);
+      }
+    }).catch(function (err) {
+      ocupado(false);
+      avisar(err.message || 'No se pudo guardar. Inténtalo otra vez.', true);
+    });
+  }
+
+  /* ---------- Fotos y documentos ---------- */
+
+  var porSubir = { fotos: [], documentos: [] };
+
+  function subirPendientes(idFicha) {
+    var campos = Object.keys(porSubir).filter(function (c) { return porSubir[c].length; });
+    if (!campos.length) return Promise.resolve();
+    var fd = new FormData();
+    campos.forEach(function (campo) {
+      porSubir[campo].forEach(function (archivo) { fd.append(campo, archivo); });
+    });
+    return fetch(EU.api.BASE + '/api/collections/fichas/records/' + idFicha, {
+      method: 'PATCH',
+      headers: { Authorization: JSON.parse(localStorage.getItem('equipouni.sesion')).token },
+      body: fd
+    }).then(function (r) {
+      if (!r.ok) throw new Error('No se pudieron subir los archivos.');
+      porSubir = { fotos: [], documentos: [] };
+    });
+  }
+
+  function pintarFotos(f2) {
+    var zona = document.getElementById('fotos-actuales');
+    if (!zona) return;
+    var fotos = (f2 && f2.productos.fotos) || [];
+    zona.innerHTML = fotos.length
+      ? fotos.map(function (fo) {
+          return '<img src="' + esc(fo.miniatura || fo.url) + '" alt="Producto de ' +
+                 esc(f2.emprendimiento.nombre) + '" width="160" height="120" loading="lazy">';
+        }).join('')
+      : '<p class="pista">Todavía no has subido fotografías.</p>';
+  }
+
+  var entradaFotos = document.getElementById('subir-fotos');
+  if (entradaFotos) {
+    entradaFotos.addEventListener('change', function () {
+      porSubir.fotos = Array.prototype.slice.call(entradaFotos.files);
+      var n = porSubir.fotos.length;
+      document.getElementById('aviso-fotos').textContent = n
+        ? n + (n === 1 ? ' foto lista para subir al guardar.' : ' fotos listas para subir al guardar.')
+        : '';
+    });
+  }
+  var entradaDocs = document.getElementById('subir-documentos');
+  if (entradaDocs) {
+    entradaDocs.addEventListener('change', function () {
+      porSubir.documentos = Array.prototype.slice.call(entradaDocs.files);
+      var n = porSubir.documentos.length;
+      document.getElementById('aviso-documentos').textContent = n
+        ? n + (n === 1 ? ' archivo listo para subir.' : ' archivos listos para subir.') : '';
+    });
+  }
+});

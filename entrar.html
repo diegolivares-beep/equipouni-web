@@ -25,7 +25,7 @@
       <p id="motivo" class="angosto" hidden>Para postular necesitas entrar a tu cuenta.
       Si todavía no tienes una, créala primero: toma unos cinco minutos.</p>
 
-      <form class="formulario" data-form-cuenta="entrar" novalidate>
+      <form class="formulario" id="form-sesion" data-modo="entrar" novalidate>
         <fieldset>
           <legend class="oculto-visual">Datos de acceso</legend>
           <div class="campo">
@@ -45,6 +45,7 @@
           <a class="boton boton--linea boton--grande" href="registro.html">Crear cuenta</a>
         </p>
         <p id="mensaje-form" class="mensaje-form" role="status" aria-live="polite"></p>
+          <p style="font-size:.9rem"><a href="#" id="recuperar">Olvidé mi contraseña</a></p>
         <p style="font-size:.9rem">La recuperación de contraseña se habilita junto con
         el sistema de cuentas.</p>
       </form>
@@ -58,10 +59,12 @@
 <script src="config/territorio.js"></script>
 <script src="config/catalogo.js"></script>
 <script src="config/estados.js"></script>
-<script src="data/oportunidades.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/modelo.js"></script>
 <script src="assets/js/nucleo.js"></script>
+<script src="assets/js/arranque.js"></script>
 <script>
-EU.ui.montarEsqueleto();
+EU.arranque.simple(function () { EU.ui.montarEsqueleto(); });
 /* Si llegó desde un botón Postular, se le explica por qué está acá. */
 if (EU.util.parametro('volver')) document.getElementById('motivo').hidden = false;
 </script>

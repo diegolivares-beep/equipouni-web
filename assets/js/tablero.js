@@ -9,7 +9,7 @@
    que mantener dos archivos casi iguales.
    ============================================================ */
 
-(function () {
+EU.alEstarListo(function () {
   'use strict';
 
   /* ---------- Lista corta de la portada ---------- */
@@ -124,4 +124,4 @@
   form.addEventListener('change', aplicar);
   form.addEventListener('submit', function (e) { e.preventDefault(); aplicar(); });
   aplicar();
-})();
+});

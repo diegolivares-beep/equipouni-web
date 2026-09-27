@@ -1,0 +1,192 @@
+/* ============================================================
+   TRADUCTOR ENTRE LA BASE Y LAS PANTALLAS
+   ------------------------------------------------------------
+   La base guarda campos planos (emp_nombre, cla_rubro) porque es lo
+   que conviene para consultar e indexar. Las pantallas trabajan con
+   objetos agrupados (emprendimiento.nombre, clasificacion.rubro)
+   porque es lo que se lee bien al escribir una vista.
+
+   Acá viven las dos traducciones. Gracias a esto, conectar el sitio
+   al backend no obligó a reescribir ninguna pantalla.
+   ============================================================ */
+
+window.EU = window.EU || {};
+
+EU.modelo = {
+
+  /* ---------- Oportunidades ---------- */
+
+  oportunidadDesdeBase: function (r) {
+    return {
+      id: r.id,
+      nombre: r.nombre,
+      tipo: r.tipo,
+      organizacion: r.organizacion,
+      estado: r.estado,
+      fechaPublicacion: r.fecha_publicacion || '',
+
+      modalidad: r.modalidad,
+      region: r.region,
+      comuna: r.comuna,
+      direccion: r.direccion,
+      lugar: r.lugar,
+
+      fechaInicio: r.fecha_inicio,
+      fechaTermino: r.fecha_termino,
+      horario: r.horario,
+
+      cupos: r.cupos,
+      cuposDisponibles: r.cupos_disponibles,
+      valor: r.valor,
+      queIncluye: r.que_incluye || [],
+      queNoIncluye: r.que_no_incluye || [],
+
+      cierrePostulacion: r.cierre_postulacion,
+      plazoPago: r.plazo_pago,
+      asistencia: r.asistencia,
+      cancelacion: r.cancelacion,
+
+      rubrosBuscados: r.rubros_buscados || [],
+      subrubrosBuscados: r.subrubros_buscados || [],
+      requisitos: r.requisitos || [],
+
+      /* La imagen puede venir subida al backend o ser una de las que
+         vinieron con el sitio. Se distingue por si trae barra. */
+      imagen: r.imagen ? EU.api.archivo(r, r.imagen) : '',
+      imagenLocal: r.imagen ? '' : 'feria-toldos.jpg',
+      imagenAlt: r.imagen_alt || '',
+      descripcion: r.descripcion,
+
+      preguntas: r.preguntas || [],
+      responsable: r.responsable,
+      orden: r.orden,
+      _registro: r
+    };
+  },
+
+  oportunidadHaciaBase: function (o) {
+    return {
+      nombre: o.nombre, tipo: o.tipo, organizacion: o.organizacion,
+      estado: o.estado, fecha_publicacion: o.fechaPublicacion || '',
+      modalidad: o.modalidad || 'presencial',
+      region: o.region, comuna: o.comuna,
+      direccion: o.direccion, lugar: o.lugar || '',
+      fecha_inicio: o.fechaInicio, fecha_termino: o.fechaTermino,
+      horario: o.horario || '',
+      cupos: o.cupos, cupos_disponibles: o.cuposDisponibles,
+      valor: o.valor,
+      que_incluye: o.queIncluye || [], que_no_incluye: o.queNoIncluye || [],
+      cierre_postulacion: o.cierrePostulacion,
+      plazo_pago: o.plazoPago || '', asistencia: o.asistencia || '',
+      cancelacion: o.cancelacion || '',
+      rubros_buscados: o.rubrosBuscados || [],
+      subrubros_buscados: o.subrubrosBuscados || [],
+      requisitos: o.requisitos || [],
+      imagen_alt: o.imagenAlt || '', descripcion: o.descripcion,
+      preguntas: o.preguntas || [],
+      responsable: o.responsable || '', orden: o.orden || 0
+    };
+  },
+
+  /* ---------- Fichas ---------- */
+
+  fichaDesdeBase: function (r) {
+    var fotos = (r.fotos || []).map(function (f) {
+      return { archivo: f, url: EU.api.archivo(r, f), miniatura: EU.api.archivo(r, f, '300x0') };
+    });
+    return {
+      id: r.id,
+      usuario: r.usuario,
+      estado: r.estado,
+      creada: (r.created || '').slice(0, 10),
+      actualizada: (r.updated || '').slice(0, 10),
+      representante: {
+        nombre: r.representante_nombre || '',
+        rut: r.representante_rut || '',
+        correo: (r.expand && r.expand.usuario && r.expand.usuario.email) || '',
+        telefono: r.representante_telefono || '',
+        comuna: r.representante_comuna || '',
+        contactoPreferido: r.contacto_preferido || 'whatsapp'
+      },
+      emprendimiento: {
+        nombre: r.emp_nombre || '',
+        comuna: r.emp_comuna || '',
+        anoInicio: r.emp_ano_inicio || '',
+        descripcion: r.emp_descripcion || '',
+        instagram: r.emp_instagram || '',
+        web: ''
+      },
+      clasificacion: {
+        rubro: r.cla_rubro || '',
+        subrubros: r.cla_subrubros || [],
+        tipos: r.cla_tipos || [],
+        otroDetalle: r.cla_otro_detalle || ''
+      },
+      productos: {
+        fotos: fotos,
+        personaliza: !!r.personaliza,
+        detallePersonaliza: r.personaliza_detalle || ''
+      },
+      formalizacion: {
+        inicioActividades: !!r.for_inicio_actividades,
+        boleta: !!r.for_boleta,
+        patente: !!r.for_patente,
+        resolucionSanitaria: !!r.for_resolucion_sanitaria,
+        personalidadJuridica: !!r.for_personalidad_juridica
+      },
+      documentos: (r.documentos || []).map(function (f) {
+        return { archivo: f, url: EU.api.archivo(r, f) };
+      }),
+      observaciones: r.observaciones || {},
+      _registro: r
+    };
+  },
+
+  /* Devuelve solo los campos editables: el estado y las observaciones
+     los maneja el backend, mandarlos sería inútil. */
+  fichaHaciaBase: function (f) {
+    return {
+      representante_nombre: f.representante.nombre,
+      representante_rut: f.representante.rut,
+      representante_telefono: f.representante.telefono,
+      representante_comuna: f.representante.comuna,
+      contacto_preferido: f.representante.contactoPreferido,
+
+      emp_nombre: f.emprendimiento.nombre,
+      emp_comuna: f.emprendimiento.comuna,
+      emp_ano_inicio: Number(f.emprendimiento.anoInicio) || null,
+      emp_descripcion: f.emprendimiento.descripcion,
+      emp_instagram: f.emprendimiento.instagram || '',
+
+      cla_rubro: f.clasificacion.rubro,
+      cla_subrubros: f.clasificacion.subrubros || [],
+      cla_tipos: f.clasificacion.tipos || [],
+      cla_otro_detalle: f.clasificacion.otroDetalle || '',
+
+      personaliza: !!f.productos.personaliza,
+      personaliza_detalle: f.productos.detallePersonaliza || '',
+
+      for_inicio_actividades: !!f.formalizacion.inicioActividades,
+      for_boleta: !!f.formalizacion.boleta,
+      for_patente: !!f.formalizacion.patente,
+      for_resolucion_sanitaria: !!f.formalizacion.resolucionSanitaria,
+      for_personalidad_juridica: !!f.formalizacion.personalidadJuridica
+    };
+  },
+
+  /* ---------- Postulaciones ---------- */
+
+  postulacionDesdeBase: function (r) {
+    return {
+      id: r.id,
+      oportunidad: r.oportunidad,
+      emprendedor: r.ficha,
+      fecha: r.fecha || (r.created || '').slice(0, 10),
+      estado: r.estado,
+      estadoAnterior: r.estado_anterior || '',
+      respuestas: r.respuestas || {},
+      historial: r.historial || [],
+      _registro: r
+    };
+  }
+};

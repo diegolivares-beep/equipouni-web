@@ -32,15 +32,15 @@
 <script src="config/territorio.js"></script>
 <script src="config/catalogo.js"></script>
 <script src="config/estados.js"></script>
-<script src="data/oportunidades.js"></script>
-<script src="data/emprendedores.js"></script>
-<script src="data/postulaciones.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/modelo.js"></script>
 <script src="assets/js/nucleo.js"></script>
+<script src="assets/js/arranque.js"></script>
 <script src="assets/js/clusters.js"></script>
 <script src="assets/js/admin.js"></script>
 <script>
-EU.admin.montar();
-(function () {
+EU.arranque.admin(function () { EU.admin.montar(); });
+EU.alEstarListo(function () {
   'use strict';
   var esc = EU.util.esc;
   var listado = document.getElementById('listado');
@@ -95,9 +95,16 @@ EU.admin.montar();
     var b = e.target;
     if (b.hasAttribute('data-validar')) {
       var id = b.getAttribute('data-validar');
-      EU.admin.resolverFicha(id, 'validar');
-      mensaje.textContent = 'Ficha validada. El aviso al emprendedor se envía aparte, en Comunicaciones.';
-      render();
+      b.disabled = true;
+      EU.admin.resolverFicha(id, 'validar').then(function () {
+        mensaje.className = 'mensaje-form';
+        mensaje.textContent = 'Ficha validada. El aviso al emprendedor se envía aparte, en Comunicaciones.';
+        render();
+      }).catch(function (err) {
+        b.disabled = false;
+        mensaje.className = 'mensaje-form mensaje-form--error';
+        mensaje.textContent = err.message;
+      });
     } else if (b.hasAttribute('data-corregir')) {
       var id2 = b.getAttribute('data-corregir');
       var campo = document.querySelector('[data-obs="' + id2 + '"]');
@@ -107,15 +114,21 @@ EU.admin.montar();
         campo.focus();
         return;
       }
-      EU.admin.resolverFicha(id2, 'corregir', campo.value.trim());
-      mensaje.className = 'mensaje-form';
-      mensaje.textContent = 'Ficha devuelta a corrección con la observación registrada.';
-      render();
+      b.disabled = true;
+      EU.admin.resolverFicha(id2, 'corregir', campo.value.trim()).then(function () {
+        mensaje.className = 'mensaje-form';
+        mensaje.textContent = 'Ficha devuelta a corrección con la observación registrada.';
+        render();
+      }).catch(function (err) {
+        b.disabled = false;
+        mensaje.className = 'mensaje-form mensaje-form--error';
+        mensaje.textContent = err.message;
+      });
     }
   });
 
   render();
-})();
+});
 </script>
 </body>
 </html>

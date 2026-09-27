@@ -9,7 +9,7 @@
    iniciar sesión o a crear la ficha, nunca a un formulario directo.
    ============================================================ */
 
-(function () {
+EU.alEstarListo(function () {
   'use strict';
 
   var esc = EU.util.esc;
@@ -86,7 +86,7 @@
         '<h1>' + esc(o.nombre) + '</h1>' +
         '<p class="oportunidad__organiza">Organiza ' + esc(o.organizacion) + '</p>' +
 
-        '<img class="detalle__foto" src="assets/img/' + esc(o.imagen) + '" alt="' +
+        '<img class="detalle__foto" src="' + esc(EU.util.urlImagen(o, '1200x0')) + '" alt="' +
           esc(o.imagenAlt) + '" width="1400" height="600" decoding="async">' +
 
         '<section class="seccion-detalle"><h2>De qué se trata</h2>' +
@@ -126,4 +126,4 @@
         botonPostular +
       '</aside>' +
     '</div>';
-})();
+});
