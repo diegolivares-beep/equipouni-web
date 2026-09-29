@@ -64,9 +64,8 @@ EU.alEstarListo(function () {
   if (o.asistencia) condiciones.push(['Asistencia', o.asistencia]);
   if (o.cancelacion) condiciones.push(['Cancelación', o.cancelacion]);
 
-  /* En producción este botón pasa por iniciar sesión. En la maqueta lleva
-     directo al flujo de postulación con la cuenta de demostración, para
-     poder recorrerlo de punta a punta. */
+  /* El botón lleva a postular.html, que exige sesión: quien no la tenga pasa
+     por iniciar sesión y vuelve acá. No hace falta comprobarlo dos veces. */
   var botonPostular = abierta
     ? '<a class="boton boton--grande" href="postular.html?id=' +
       encodeURIComponent(o.id) + '">Postular</a>' +

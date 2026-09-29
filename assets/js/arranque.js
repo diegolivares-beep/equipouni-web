@@ -90,6 +90,16 @@ EU.arranque = (function () {
   'use strict';
 
   function aviso(texto, detalle) {
+    /* Si los datos fallaron, la pantalla nunca llegó a montar su cabecera,
+       porque eso pasa en el callback. Quedaba una página sin menú y sin pie:
+       la persona veía el error y no tenía a dónde ir salvo los dos botones.
+       Se monta la cabecera pública, que sirve en cualquier modo. */
+    var arriba = document.getElementById('cabecera');
+    if (arriba && !arriba.innerHTML.trim()) arriba.innerHTML = EU.ui.cabecera();
+    var abajo = document.getElementById('pie');
+    if (abajo && !abajo.innerHTML.trim()) abajo.innerHTML = EU.ui.pie();
+    EU.ui.conectarSalir();
+
     var main = document.getElementById('contenido') || document.body;
     main.innerHTML =
       '<div class="envoltura bloque"><div class="sin-resultados" style="border:0">' +

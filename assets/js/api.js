@@ -67,7 +67,13 @@ EU.api = (function () {
     });
   }
 
-  /* Traduce los errores del backend a algo que se pueda leer en pantalla. */
+  /* Traduce los errores del backend a algo que se pueda leer en pantalla.
+
+     Regla: al usuario nunca le llega un mensaje del servidor sin traducir.
+     PocketBase contesta en inglés y con lenguaje técnico ("Something went
+     wrong.", "Failed to create record."), y eso terminaba impreso tal cual
+     en la cara de un emprendedor. Lo que no se reconoce se cambia por una
+     frase en español; el original queda en la consola para poder depurar. */
   function mensajeDeError(cuerpo, estado) {
     if (cuerpo && cuerpo.message) {
       var detalle = cuerpo.data && Object.keys(cuerpo.data).length
@@ -75,15 +81,40 @@ EU.api = (function () {
             return cuerpo.data[k].message || k;
           }).join(' ')
         : '';
+
       if (/failed to authenticate/i.test(cuerpo.message)) {
         return 'El correo o la contraseña no coinciden.';
       }
-      if (/already exists|unique/i.test(detalle)) {
+      /* El correo repetido y la postulación repetida dan el mismo código de
+         unicidad: hay que mirar QUÉ campo para no decir una cosa por otra. */
+      if (/unique/i.test(detalle)) {
+        if (cuerpo.data && (cuerpo.data.oportunidad || cuerpo.data.ficha)) {
+          return 'Ya postulaste a esta oportunidad.';
+        }
+        if (cuerpo.data && cuerpo.data.usuario) {
+          return 'Ya tienes una ficha creada.';
+        }
         return 'Ese correo ya tiene una cuenta.';
       }
-      return detalle || cuerpo.message;
+      if (/failed to create record/i.test(cuerpo.message) && !detalle) {
+        return 'No se pudo guardar. Revisa los datos e inténtalo otra vez.';
+      }
+      if (/something went wrong/i.test(cuerpo.message)) {
+        return 'El servidor tuvo un problema. Inténtalo en unos minutos.';
+      }
+      if (detalle) return detalle;
+
+      /* Si sigue en inglés, no se muestra: se cambia por algo legible. */
+      if (!/[áéíóúñ¿¡]/i.test(cuerpo.message)) {
+        if (console && console.warn) console.warn('Error sin traducir:', cuerpo.message);
+        return estado >= 500
+          ? 'El servidor tuvo un problema. Inténtalo en unos minutos.'
+          : 'No se pudo completar la acción. Inténtalo otra vez.';
+      }
+      return cuerpo.message;
     }
     if (estado === 0) return 'No se pudo conectar. Revisa tu conexión.';
+    if (estado >= 500) return 'El servidor tuvo un problema. Inténtalo en unos minutos.';
     return 'Ocurrió un problema (código ' + estado + ').';
   }
 

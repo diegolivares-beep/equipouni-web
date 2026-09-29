@@ -11,8 +11,11 @@
    3. Todas las preguntas particulares tienen respuesta.
    4. No existe otra postulación del mismo emprendimiento.
 
-   En la versión real, la postulación queda vinculada a una copia de
-   los datos de la ficha en ese momento.
+   OJO con lo que NO hace: la postulación guarda una referencia a la
+   ficha, no una copia de sus datos. Si el emprendedor edita su ficha
+   después de postular, quien organiza recibe lo nuevo y no lo que él
+   envió. La especificación pedía la copia y todavía no está hecha; el
+   texto de la pantalla sí dice la verdad sobre esto.
    ============================================================ */
 
 EU.alEstarListo(function () {
