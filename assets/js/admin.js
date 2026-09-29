@@ -80,11 +80,25 @@ EU.admin = {
       });
   },
 
+  /* Las cinco secciones de la ficha, en el orden en que se revisan. La
+     observación se guarda contra una de ellas para que el emprendedor
+     sepa qué tiene que arreglar: antes todo caía en "general" y él leía
+     "general" como título del problema. */
+  SECCIONES: [
+    ['representante', 'Quién representa'],
+    ['emprendimiento', 'El emprendimiento'],
+    ['clasificacion', 'Qué vende'],
+    ['productos', 'Sus productos'],
+    ['formalizacion', 'Formalización']
+  ],
+
   /* Cambia el estado de una ficha (validar o pedir corrección). */
-  resolverFicha: function (idFicha, decision, observacion) {
+  resolverFicha: function (idFicha, decision, observacion, seccion) {
+    var obs = {};
+    obs[seccion || 'general'] = observacion || 'Revisar antecedentes.';
     var cuerpo = decision === 'validar'
       ? { estado: 'validada', observaciones: {} }
-      : { estado: 'correccion', observaciones: { general: observacion || 'Revisar antecedentes.' } };
+      : { estado: 'correccion', observaciones: obs };
     return EU.api.actualizar('fichas', idFicha, cuerpo).then(function (r) {
       var f = EU.datos.emprendedor(idFicha);
       var nueva = EU.modelo.fichaDesdeBase(r);
@@ -128,17 +142,55 @@ EU.admin = {
         esc(em.nombre) + '" width="160" height="120" loading="lazy">';
     }).join('');
 
+    /* Los archivos adjuntos: la pantalla promete comprobarlos y antes no
+       los mostraba, sólo decía qué casillas había marcado el emprendedor.
+       Van protegidos, así que el enlace pide su permiso al tocarlo. */
+    var adjuntos = (ficha.documentos || []).length
+      ? (ficha.documentos || []).map(function (d, i) {
+          return '<button type="button" class="enlace-doc" data-doc="' + esc(ficha.id) +
+            '" data-archivo="' + esc(d.archivo) + '" style="background:none;border:0;padding:0;' +
+            'color:var(--acento);text-decoration:underline;cursor:pointer;font:inherit">' +
+            'Documento ' + (i + 1) + '</button>';
+        }).join(' · ')
+      : '<span style="color:var(--tinta-2)">No subió ninguno</span>';
+
+    var personaliza = ficha.productos.personaliza
+      ? 'Sí' + (ficha.productos.detallePersonaliza
+          ? ': ' + esc(ficha.productos.detallePersonaliza) : '')
+      : 'No';
+
     return '<dl class="datos" style="border-top:0;padding-top:0;margin-top:.4rem">' +
       '<div><dt>Representante</dt><dd>' + esc(r.nombre) + '<br>' + esc(r.rut) + '</dd></div>' +
       '<div><dt>Contacto</dt><dd>' + esc(r.correo) + '<br>' + esc(r.telefono) + '</dd></div>' +
       '<div><dt>Comuna</dt><dd>' + esc(EU.territorio.nombreComuna(em.comuna)) + '</dd></div>' +
       '<div><dt>Desde</dt><dd>' + em.anoInicio + '</dd></div>' +
       '<div><dt>Clasificación</dt><dd>' + esc(EU.admin.clasificacionCorta(ficha)) + '</dd></div>' +
-      '<div><dt>Documentos</dt><dd>' + (docs.length ? esc(docs.join(', ')) : 'Ninguno declarado') + '</dd></div>' +
+      '<div><dt>Personaliza</dt><dd>' + personaliza + '</dd></div>' +
+      '<div><dt>Declara tener</dt><dd>' + (docs.length ? esc(docs.join(', ')) : 'Ninguno') + '</dd></div>' +
+      '<div><dt>Archivos que subió</dt><dd>' + adjuntos + '</dd></div>' +
       '</dl>' +
       '<p style="margin:.7rem 0 .4rem;font-size:.92rem">' + esc(em.descripcion) + '</p>' +
       (em.instagram ? '<p style="font-size:.85rem"><a href="' + esc(em.instagram) +
-        '">Ver redes del emprendimiento</a></p>' : '') +
+        '" target="_blank" rel="noopener noreferrer">Ver redes del emprendimiento</a></p>' : '') +
       '<div class="fotos-ficha">' + fotos + '</div>';
+  },
+
+  /* Abre un documento protegido. Se engancha una vez por pantalla y vale
+     para todos los botones, incluidos los que se dibujen después. */
+  conectarDocumentos: function (contenedor) {
+    (contenedor || document).addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-doc]') : null;
+      if (!b) return;
+      var ficha = EU.datos.emprendedor(b.getAttribute('data-doc'));
+      if (!ficha) return;
+      var texto = b.textContent;
+      b.textContent = 'Abriendo…';
+      EU.api.archivoProtegido(ficha._registro, b.getAttribute('data-archivo'))
+        .then(function (url) {
+          b.textContent = texto;
+          window.open(url, '_blank', 'noopener');
+        })
+        .catch(function () { b.textContent = 'No se pudo abrir'; });
+    });
   }
 };

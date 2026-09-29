@@ -21,9 +21,10 @@
 <main class="bloque">
   <div class="envoltura">
     <h1>Control de fundación</h1>
-    <p style="max-width:62ch">Comprueba que la configuración y los datos de ejemplo estén
-    completos y sean coherentes entre sí. Se abre con doble clic, sin servidor.
-    Revisa esta página cada vez que edites algo dentro de <code>config/</code> o de <code>data/</code>.</p>
+    <p style="max-width:62ch">Comprueba que la configuración y los datos que hay en la base
+    estén completos y sean coherentes entre sí. Necesita sesión de administrador, porque
+    los datos los pide a la API. Conviene revisarla después de tocar algo dentro de
+    <code>config/</code> o de cargar oportunidades nuevas.</p>
 
     <div id="salida"></div>
   </div>
@@ -40,7 +41,12 @@
 <script src="assets/js/validar-datos.js"></script>
 <script>EU.arranque.admin(function(){});</script>
 <script>
-(function () {
+/* Antes esto corría de inmediato, cuando los datos venían en archivos .js
+   que cargaban junto con el HTML. Ahora vienen de la API y llegan después,
+   así que hay que esperarlos como hace el resto del sitio: sin esto,
+   EU.datos.oportunidades todavía no existe y la página muere en un
+   TypeError antes de dibujar nada. */
+EU.alEstarListo(function () {
   'use strict';
 
   function esc(s) {
@@ -136,7 +142,7 @@
   html += '</ul></section>';
 
   salida.innerHTML = html;
-})();
+});
 </script>
 </body>
 </html>

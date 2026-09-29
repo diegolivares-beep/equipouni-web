@@ -58,8 +58,12 @@ EU.alEstarListo(function () {
     }
 
     listado.innerHTML = pendientes.map(function (fi) {
+      var nombreSeccion = {};
+      EU.admin.SECCIONES.forEach(function (s) { nombreSeccion[s[0]] = s[1]; });
       var obs = Object.keys(fi.observaciones || {}).map(function (s) {
-        return '<p class="aviso-categoria">' + esc(fi.observaciones[s]) + '</p>';
+        return '<p class="aviso-categoria"><strong>' +
+          esc(nombreSeccion[s] || 'Observación') + ':</strong> ' +
+          esc(fi.observaciones[s]) + '</p>';
       }).join('');
       var alerta = fi.clasificacion.rubro === EU.catalogo.OTRO
         ? '<p class="aviso-categoria">Se clasificó como "Otro": hay que decidir a qué ' +
@@ -82,8 +86,17 @@ EU.alEstarListo(function () {
           EU.admin.fichaCompleta(fi) +
           '<div class="acciones-lote">' +
             '<button type="button" class="boton" data-validar="' + esc(fi.id) + '">Validar ficha</button>' +
-            '<input type="text" data-obs="' + esc(fi.id) + '" placeholder="Observación para el emprendedor"' +
-              ' style="flex:1;min-width:220px;padding:.55rem .6rem;border:1px solid var(--borde);border-radius:var(--r);font:inherit">' +
+            /* La observación se guarda contra una sección concreta, para
+               que el emprendedor vea el problema donde tiene que
+               arreglarlo y no bajo un título que dice "general". */
+            '<select data-seccion="' + esc(fi.id) + '"' +
+              ' style="padding:.55rem .6rem;border:1px solid var(--borde);border-radius:var(--r);font:inherit">' +
+              EU.admin.SECCIONES.map(function (s) {
+                return '<option value="' + esc(s[0]) + '">' + esc(s[1]) + '</option>';
+              }).join('') +
+            '</select>' +
+            '<input type="text" data-obs="' + esc(fi.id) + '" placeholder="Qué tiene que corregir"' +
+              ' style="flex:1;min-width:200px;padding:.55rem .6rem;border:1px solid var(--borde);border-radius:var(--r);font:inherit">' +
             '<button type="button" class="boton boton--linea" data-corregir="' + esc(fi.id) + '">Pedir corrección</button>' +
           '</div>' +
         '</div>' +
@@ -114,8 +127,10 @@ EU.alEstarListo(function () {
         campo.focus();
         return;
       }
+      var selector = document.querySelector('[data-seccion="' + id2 + '"]');
       b.disabled = true;
-      EU.admin.resolverFicha(id2, 'corregir', campo.value.trim()).then(function () {
+      EU.admin.resolverFicha(id2, 'corregir', campo.value.trim(),
+                             selector ? selector.value : 'general').then(function () {
         mensaje.className = 'mensaje-form';
         mensaje.textContent = 'Ficha devuelta a corrección con la observación registrada.';
         render();
@@ -127,6 +142,7 @@ EU.alEstarListo(function () {
     }
   });
 
+  EU.admin.conectarDocumentos(listado);
   render();
 });
 </script>
