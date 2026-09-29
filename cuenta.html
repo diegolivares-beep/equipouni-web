@@ -59,18 +59,30 @@ EU.alEstarListo(function () {
   'use strict';
   var esc = EU.util.esc;
   var ficha = EU.sesion.ficha();
+  var usuario = EU.api.usuario() || {};
   var mias = EU.datos.postulacionesDe(EU.sesion.emprendedor);
 
+  /* Hay dos formas legítimas de llegar acá sin ficha: recién creada la
+     cuenta, y con una cuenta de administración, que nunca va a tener
+     una. Antes esta línea explotaba y dejaba la pantalla a medias. */
+  var nombre = (ficha && ficha.representante.nombre) || usuario.nombre || usuario.email || '';
   document.getElementById('saludo').textContent =
-    'Hola, ' + ficha.representante.nombre.split(' ')[0];
+    nombre ? 'Hola, ' + nombre.split(' ')[0] : 'Mi cuenta';
 
   /* Contadores por estado */
-  var porEstado = { postulado: 0, seleccionado: 0, confirmado: 0, renuncio: 0 };
-  mias.forEach(function (p) { porEstado[p.estado] += 1; });
+  /* Los contadores se arman desde la tabla de estados, no a mano: con la
+     lista escrita acá, un estado nuevo daba NaN en la pantalla. */
+  var porEstado = {};
+  Object.keys(EU.estados.postulacionInfo).forEach(function (e) { porEstado[e] = 0; });
+  mias.forEach(function (p) {
+    if (porEstado[p.estado] === undefined) porEstado[p.estado] = 0;
+    porEstado[p.estado] += 1;
+  });
 
   var tarjetas = [
-    { titulo: 'Mi ficha', valor: EU.estados.etiqueta('ficha', ficha.estado),
-      enlace: 'cuenta-ficha.html', accion: 'Ver mi ficha' },
+    { titulo: 'Mi ficha',
+      valor: ficha ? EU.estados.etiqueta('ficha', ficha.estado) : 'Todavía no la creas',
+      enlace: 'cuenta-ficha.html', accion: ficha ? 'Ver mi ficha' : 'Crear mi ficha' },
     { titulo: 'En espera de respuesta', valor: porEstado.postulado + ' postulación(es)',
       enlace: 'cuenta-postulaciones.html', accion: 'Ver mis postulaciones' },
     { titulo: 'Seleccionado', valor: porEstado.seleccionado + ' cupo(s) por confirmar',
@@ -89,7 +101,10 @@ EU.alEstarListo(function () {
   /* Pendientes concretos, no genéricos */
   var pendientes = [];
 
-  if (!EU.estados.info('ficha', ficha.estado).permitePostular) {
+  if (!ficha) {
+    pendientes.push(['Tu ficha', 'Todavía no la creas. Es lo primero: se llena una vez ' +
+      'y sirve para postular a todas las oportunidades.']);
+  } else if (!EU.estados.info('ficha', ficha.estado).permitePostular) {
     pendientes.push(['Tu ficha', 'Está en estado "' +
       EU.estados.etiqueta('ficha', ficha.estado).toLowerCase() +
       '" y no permite postular todavía. Revísala en Mi ficha.']);
