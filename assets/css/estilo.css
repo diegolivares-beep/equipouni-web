@@ -490,10 +490,38 @@ legend .estado { margin-left: .5rem; vertical-align: middle; }
    y no en el sitio público, aunque compartan estilos. */
 .cabecera--admin { border-top: 4px solid var(--marca); }
 
-.tabla-envoltura { overflow-x: auto; }
+/* Las tablas del panel en un teléfono.
+
+   Antes la tabla tenía solo width:100% dentro de un contenedor con
+   overflow-x:auto, y eso NO produce scroll: la tabla se encoge al ancho
+   disponible y el texto queda cortado. En un celular de 393 px el estado de
+   la ficha se leía "Pendien de validaci" y la columna con el botón quedaba
+   fuera de la pantalla, o sea el panel no se podía usar desde el teléfono.
+
+   Con min-width la tabla conserva anchos legibles y el contenedor scrolla de
+   verdad. Las sombras de los bordes avisan que hay más hacia el lado, que sin
+   barra de scroll visible nadie adivina. Y la primera columna queda fija, para
+   no perder de vista de quién es cada fila mientras se mira a la derecha. */
+.tabla-envoltura {
+  overflow-x: auto;
+  background:
+    linear-gradient(to right, var(--papel) 30%, rgba(255,252,248,0)) left center / 36px 100% no-repeat local,
+    linear-gradient(to left,  var(--papel) 30%, rgba(255,252,248,0)) right center / 36px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(26,26,26,.13), rgba(26,26,26,0)) left center / 14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(26,26,26,.13), rgba(26,26,26,0)) right center / 14px 100% no-repeat scroll;
+}
 .tabla {
-  width: 100%; border-collapse: collapse;
+  width: 100%; min-width: 680px; border-collapse: collapse;
   font-size: .9rem;
+}
+@media (max-width: 760px) {
+  .tabla th:first-child,
+  .tabla td:first-child {
+    position: sticky; left: 0; z-index: 1;
+    background: var(--papel);
+    padding-right: 1rem;
+  }
+  .fila-detalle > td { position: static; }
 }
 .tabla th {
   text-align: left; font-size: .66rem; letter-spacing: .11em;

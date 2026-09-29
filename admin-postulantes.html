@@ -159,7 +159,16 @@ EU.alEstarListo(function () {
 
       '<div class="tabla-envoltura"><table class="tabla">' +
         '<thead><tr><th></th><th>Emprendimiento</th><th>Clúster</th><th>Estado</th><th></th></tr></thead>' +
-        '<tbody>' + (filas || '<tr><td colspan="5">Nadie calza con esos filtros.</td></tr>') + '</tbody>' +
+        /* El vacío tiene dos causas distintas y antes se culpaba siempre a
+           los filtros: "Nadie calza con esos filtros" aparecía también
+           cuando la oportunidad no tenía ninguna postulación, que no es lo
+           mismo y lleva a buscar un filtro que no existe. */
+        '<tbody>' + (filas || '<tr><td colspan="5">' +
+          (todas.length
+            ? 'Ninguno de los ' + todas.length + ' postulantes calza con estos filtros. ' +
+              'Vuelve a dejarlos en "Todos" para verlos.'
+            : 'Todavía nadie postula a esta oportunidad.') +
+          '</td></tr>') + '</tbody>' +
       '</table></div>';
 
     /* Filtros */

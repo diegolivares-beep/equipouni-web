@@ -115,11 +115,21 @@ EU.admin = {
     return '<span class="estado estado--' + clase + '">' + EU.util.esc(info.etiqueta) + '</span>';
   },
 
-  /* Resumen en una línea de la clasificación de una ficha. */
+  /* Resumen en una línea de la clasificación de una ficha.
+
+     Si el rubro no está en el catálogo, EU.catalogo.nombre devuelve el
+     identificador crudo, y antes eso se imprimía como si fuera un nombre:
+     el revisor leía "alimentos" en minúscula y no tenía cómo saber que esa
+     ficha apunta a una categoría que ya no existe. Va a pasar de verdad en
+     cuanto el cliente ajuste el catálogo, porque las fichas viejas se quedan
+     con los identificadores viejos. Por eso se dice. */
   clasificacionCorta: function (ficha) {
     var c = ficha.clasificacion;
     if (c.rubro === EU.catalogo.OTRO) return 'Otro: ' + (c.otroDetalle || 'sin detalle');
     var t = EU.catalogo.nombre(c.rubro);
+    if (c.rubro && !EU.catalogo.rubro(c.rubro)) {
+      t = c.rubro + ' (rubro fuera del catálogo)';
+    }
     var subs = EU.catalogo.nombresSubrubros(c);
     if (subs.length) t += ' · ' + subs.join(', ');
     return t;
