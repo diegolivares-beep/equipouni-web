@@ -42,6 +42,18 @@ EU.alEstarListo(function () {
 
   EU.ui.titulo('Postular a ' + o.nombre);
 
+  /* Sin ficha no hay nada que postular. Va antes que todo lo demás
+     porque el resto de la pantalla la lee: quien se registró y entró
+     directo a una oportunidad llegaba acá sin ficha y veía la página en
+     blanco, sin ningún mensaje. */
+  if (!ficha) {
+    pantalla('<h1>Primero necesitas tu ficha</h1>' +
+      '<p class="angosto">Para postular a ' + esc(o.nombre) + ' hace falta la ficha de tu ' +
+      'emprendimiento: se llena una sola vez y sirve para todas las oportunidades.</p>' +
+      volverA('', 'cuenta-ficha.html', 'Crear mi ficha'));
+    return;
+  }
+
   /* Validación 1: abierta y dentro del plazo. */
   if (!EU.estados.recibePostulaciones(o)) {
     pantalla('<h1>Esta oportunidad ya cerró</h1>' +
@@ -78,8 +90,17 @@ EU.alEstarListo(function () {
         '<div><dt>Comuna</dt><dd>' + esc(EU.territorio.nombreComuna(ficha.emprendimiento.comuna)) + '</dd></div>' +
         '<div><dt>Contacto</dt><dd>' + esc(ficha.representante.correo) + '</dd></div>' +
       '</dl>' +
-      '<p class="nota">Esta es la información que va a recibir quien organiza, tal como ' +
-      'está ahora. <a href="cuenta-ficha.html">Revisar mi ficha</a> antes de enviar.</p>' +
+      /* El detalle de lo que se comparte tiene que coincidir con lo que
+         de verdad sale en el documento que recibe la productora
+         (assets/js/exportar.js). Si ese documento cambia, este texto
+         cambia con él: decir de menos acá es comprometer datos de una
+         persona sin habérselo dicho. */
+      '<p class="nota">Si postulas, quien organiza ' + esc(o.nombre) + ' va a recibir estos ' +
+      'datos y además el nombre de quien representa, el teléfono de contacto, la ' +
+      'descripción y las redes de tu emprendimiento, qué documentos de formalización ' +
+      'declaraste tener y tus respuestas a las preguntas de más abajo. No recibe tu RUT ' +
+      'ni los archivos que subiste. <a href="cuenta-ficha.html">Revisar mi ficha</a> ' +
+      'antes de enviar.</p>' +
     '</div>' +
     (puedeFicha ? '' :
       '<p class="aviso-categoria">Tu ficha está en estado "' +

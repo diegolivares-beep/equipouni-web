@@ -95,10 +95,46 @@
           <textarea id="o-incluye" name="queIncluye"></textarea>
         </div>
         <div class="campo">
+          <label for="o-no-incluye">Qué no incluye
+            <span class="pista">Una cosa por línea. Evita reclamos después.</span>
+          </label>
+          <textarea id="o-no-incluye" name="queNoIncluye"></textarea>
+        </div>
+        <div class="campo">
           <label for="o-requisitos">Requisitos
             <span class="pista">Uno por línea. Aparecen en el detalle público.</span>
           </label>
           <textarea id="o-requisitos" name="requisitos"></textarea>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="o-lugar">Nombre del lugar
+              <span class="pista">Plaza de Armas, Gimnasio Municipal.</span>
+            </label>
+            <input type="text" id="o-lugar" name="lugar">
+          </div>
+          <div>
+            <label for="o-modalidad">Modalidad</label>
+            <select id="o-modalidad" name="modalidad">
+              <option value="presencial">Presencial</option>
+              <option value="online">En línea</option>
+              <option value="mixta">Mixta</option>
+            </select>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="o-imagen">Imagen de la oportunidad
+            <span class="pista">JPG, PNG o WebP, hasta 5 MB. Si no subes ninguna se usa una genérica.</span>
+          </label>
+          <input type="file" id="o-imagen" name="imagen" accept="image/jpeg,image/png,image/webp">
+          <p id="aviso-imagen" class="mensaje-form" style="min-height:0"></p>
+          <div id="imagen-actual"></div>
+        </div>
+        <div class="campo">
+          <label for="o-imagen-alt">Descripción de la imagen
+            <span class="pista">Para quien no puede verla. Una línea.</span>
+          </label>
+          <input type="text" id="o-imagen-alt" name="imagenAlt" maxlength="200">
         </div>
         <div class="campo campo--fila">
           <div>

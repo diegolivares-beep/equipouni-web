@@ -230,7 +230,7 @@ EU.ui = {
     }).join('');
 
     var aviso = '';
-    if (EU.marca.esMaqueta) {
+    if (EU.marca.datosDeEjemplo) {
       aviso = '<div class="demo"><div class="envoltura"><p>' +
         EU.util.esc(EU.marca.avisoEjemplo || '') + '</p></div></div>';
     }
@@ -264,13 +264,15 @@ EU.ui = {
     if (c.whatsapp) contacto += '<li><a href="https://wa.me/' + EU.util.esc(c.whatsapp) + '">WhatsApp</a></li>';
     if (c.instagram) contacto += '<li><a href="https://instagram.com/' + EU.util.esc(c.instagram) + '">Instagram</a></li>';
 
-    var legal = EU.marca.esMaqueta
-      ? 'Maqueta de revisión con datos de ejemplo. Fotografías de referencia vía Unsplash, ' +
-        'a reemplazar por imágenes reales de cada oportunidad.'
+    var legal = EU.marca.datosDeEjemplo
+      ? 'Las oportunidades publicadas son de ejemplo mientras cargamos las reales. ' +
+        'Fotografías de referencia vía Unsplash, a reemplazar por imágenes de cada evento.'
       : '';
 
-    /* Accesos de revisión: existen solo mientras el sitio sea maqueta,
-       para poder recorrer las tres áreas sin sistema de cuentas. */
+    /* Accesos de revisión: existen SOLO mientras el sitio sea una
+       maqueta, para poder recorrer las tres áreas sin cuentas. En
+       producción no van: publicaban el panel administrativo en el pie de
+       todas las páginas públicas. */
     var revision = EU.marca.esMaqueta
       ? '<div><strong>Revisión de la maqueta</strong><ul>' +
         '<li><a href="cuenta.html">Área privada (demostración)</a></li>' +
@@ -292,6 +294,10 @@ EU.ui = {
           '<li><a href="nosotros.html">Sobre ' + EU.util.esc(EU.marca.nombre) + '</a></li>' +
         '</ul></div>' +
         '<div><strong>Contacto</strong><ul>' + contacto + '</ul></div>' +
+        '<div><strong>Legal</strong><ul>' +
+          '<li><a href="privacidad.html">Privacidad de tus datos</a></li>' +
+          '<li><a href="terminos.html">Términos de uso</a></li>' +
+        '</ul></div>' +
         revision +
       '</div>' +
       (legal ? '<p class="pie__legal">' + legal + '</p>' : '') +
@@ -366,7 +372,6 @@ EU.ui = {
     var propio = document.body.getAttribute('data-titulo');
     if (propio) document.title = propio + ' | ' + EU.marca.nombre;
 
-    if (EU.marca.esMaqueta) document.documentElement.classList.add('es-maqueta');
     EU.ui.conectarSalir();
   },
 

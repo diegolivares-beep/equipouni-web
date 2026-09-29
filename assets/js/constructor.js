@@ -220,8 +220,12 @@ EU.alEstarListo(function () {
     f.elements.cupos.value = original.cupos;
     f.elements.valor.value = original.valor;
     f.elements.cierrePostulacion.value = original.cierrePostulacion;
+    f.elements.lugar.value = original.lugar || '';
+    f.elements.modalidad.value = original.modalidad || 'presencial';
     f.elements.queIncluye.value = (original.queIncluye || []).join('\n');
+    f.elements.queNoIncluye.value = (original.queNoIncluye || []).join('\n');
     f.elements.requisitos.value = (original.requisitos || []).join('\n');
+    f.elements.imagenAlt.value = original.imagenAlt || '';
     f.elements.plazoPago.value = original.plazoPago || '';
     f.elements.asistencia.value = original.asistencia || '';
     f.elements.cancelacion.value = original.cancelacion || '';
@@ -275,8 +279,7 @@ EU.alEstarListo(function () {
   /* ---------- Guardar contra el backend ---------- */
 
   function comoLineas(texto) {
-    return (texto || '').split('
-').map(function (l) { return l.trim(); })
+    return (texto || '').split('\n').map(function (l) { return l.trim(); })
       .filter(function (l) { return l; });
   }
 
@@ -290,16 +293,23 @@ EU.alEstarListo(function () {
       region: (f.elements.comuna.value || '').slice(0, 2),
       comuna: f.elements.comuna.value,
       direccion: f.elements.direccion.value.trim(),
-      lugar: f.elements.direccion.value.trim(),
+      /* El lugar es su propio campo, no una copia de la dirección: antes
+         se pisaba con ella y "Plaza de Armas" se convertía en la calle. */
+      lugar: f.elements.lugar.value.trim(),
+      modalidad: f.elements.modalidad.value,
       descripcion: f.elements.descripcion.value.trim(),
       fechaInicio: f.elements.fechaInicio.value,
       fechaTermino: f.elements.fechaTermino.value,
       horario: f.elements.horario.value.trim(),
       cupos: Number(f.elements.cupos.value) || 0,
-      cuposDisponibles: original ? original.cuposDisponibles : Number(f.elements.cupos.value) || 0,
+      /* Al crear, todos los cupos están libres. De ahí en adelante el
+         número lo lleva el backend contando las postulaciones que ocupan
+         lugar, así que acá no se toca: mandarlo lo dejaría viejo. */
+      cuposDisponibles: original ? undefined : Number(f.elements.cupos.value) || 0,
       valor: Number(f.elements.valor.value) || 0,
       cierrePostulacion: f.elements.cierrePostulacion.value,
       queIncluye: comoLineas(f.elements.queIncluye.value),
+      queNoIncluye: comoLineas(f.elements.queNoIncluye.value),
       requisitos: comoLineas(f.elements.requisitos.value),
       plazoPago: f.elements.plazoPago.value.trim(),
       asistencia: f.elements.asistencia.value.trim(),
@@ -308,7 +318,7 @@ EU.alEstarListo(function () {
         f.querySelectorAll('[name="rubros"]:checked'), function (c) { return c.value; }),
       subrubrosBuscados: Array.prototype.map.call(
         f.querySelectorAll('[name="subrubros"]:checked'), function (c) { return c.value; }),
-      imagenAlt: original ? original.imagenAlt : '',
+      imagenAlt: f.elements.imagenAlt.value.trim(),
       preguntas: preguntas.filter(function (q) { return q.texto.trim(); }),
       responsable: f.elements.responsable.value.trim(),
       orden: original ? original.orden : 0
@@ -330,12 +340,66 @@ EU.alEstarListo(function () {
       : EU.api.crear('oportunidades', cuerpo);
 
     accion.then(function (r) {
+      return subirImagen(r.id);
+    }).then(function () {
       var etiqueta = EU.estados.oportunidadInfo[estado].etiqueta.toLowerCase();
       location.href = 'admin-oportunidades.html?guardada=' + encodeURIComponent(etiqueta);
     }).catch(function (err) {
       mensaje.className = 'mensaje-form mensaje-form--error';
       mensaje.textContent = err.message || 'No se pudo guardar.';
     });
+  }
+
+  /* ---------- Imagen de la oportunidad ----------
+     El archivo va aparte del resto porque una subida necesita FormData
+     y el resto del cuerpo viaja como JSON. Se manda después de guardar,
+     cuando el registro ya tiene identificador. */
+
+  var entradaImagen = document.getElementById('o-imagen');
+  var porSubirImagen = null;
+
+  if (entradaImagen) {
+    entradaImagen.addEventListener('change', function () {
+      porSubirImagen = entradaImagen.files[0] || null;
+      var aviso = document.getElementById('aviso-imagen');
+      if (!aviso) return;
+      if (!porSubirImagen) { aviso.textContent = ''; return; }
+      if (porSubirImagen.size > 5 * 1024 * 1024) {
+        aviso.className = 'mensaje-form mensaje-form--error';
+        aviso.textContent = 'Esa imagen pesa más de 5 MB. Achícala antes de subirla.';
+        porSubirImagen = null;
+        entradaImagen.value = '';
+        return;
+      }
+      aviso.className = 'mensaje-form';
+      aviso.textContent = porSubirImagen.name + ' lista para subir al guardar.';
+    });
+  }
+
+  function subirImagen(idOportunidad) {
+    if (!porSubirImagen) return Promise.resolve();
+    var fd = new FormData();
+    fd.append('imagen', porSubirImagen);
+    return fetch(EU.api.BASE + '/api/collections/oportunidades/records/' + idOportunidad, {
+      method: 'PATCH',
+      headers: { Authorization: EU.api.token() },
+      body: fd
+    }).then(function (r) {
+      if (!r.ok) throw new Error('Se guardó la oportunidad, pero no se pudo subir la imagen.');
+      porSubirImagen = null;
+    });
+  }
+
+  /* Al editar, mostrar la imagen que ya tiene para saber si hace falta
+     cambiarla. */
+  if (original && original.imagen) {
+    var zona = document.getElementById('imagen-actual');
+    if (zona) {
+      zona.innerHTML = '<p class="pista" style="margin:.5rem 0 .3rem">Imagen actual:</p>' +
+        '<img src="' + EU.util.esc(EU.util.urlImagen(original, '360x270')) +
+        '" alt="' + EU.util.esc(original.imagenAlt || '') +
+        '" width="180" height="135" style="height:auto;border-radius:6px">';
+    }
   }
 
   /* Botones de publicación: lo que pidió el cliente, un botón por acción

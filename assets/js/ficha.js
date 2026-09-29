@@ -359,7 +359,7 @@ EU.alEstarListo(function () {
     });
     return fetch(EU.api.BASE + '/api/collections/fichas/records/' + idFicha, {
       method: 'PATCH',
-      headers: { Authorization: JSON.parse(localStorage.getItem('equipouni.sesion')).token },
+      headers: { Authorization: EU.api.token() },
       body: fd
     }).then(function (r) {
       if (!r.ok) throw new Error('No se pudieron subir los archivos.');

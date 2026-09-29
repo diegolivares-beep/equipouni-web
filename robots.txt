@@ -1,3 +1,17 @@
-# Maqueta de revision: no indexar.
+# El area privada y el panel no se indexan nunca: no tienen nada que
+# buscar y publicarlos solo le sirve a quien vaya a probar claves.
 User-agent: *
+Disallow: /admin.html
+Disallow: /admin-
+Disallow: /control.html
+Disallow: /cuenta.html
+Disallow: /cuenta-
+Disallow: /postular.html
+Disallow: /entrar.html
+
+# MIENTRAS LAS OPORTUNIDADES SEAN DE EJEMPLO, el sitio entero queda
+# fuera de los buscadores: una feria inventada que aparezca en Google
+# manda gente de verdad a un evento que no existe.
+# Al cargar las oportunidades reales (tarea T377) se borra la linea de
+# abajo y el sitio pasa a ser indexable.
 Disallow: /

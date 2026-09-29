@@ -91,22 +91,31 @@ EU.estados = {
 
   /* ---------- Postulación ---------- */
   postulacion: {
-    POSTULADO:    'postulado',
-    SELECCIONADO: 'seleccionado',
-    CONFIRMADO:   'confirmado',
-    RENUNCIO:     'renuncio'
+    POSTULADO:       'postulado',
+    SELECCIONADO:    'seleccionado',
+    NO_SELECCIONADO: 'no_seleccionado',
+    CONFIRMADO:      'confirmado',
+    RENUNCIO:        'renuncio'
   },
 
   postulacionInfo: {
     postulado: {
       etiqueta: 'Postulado',
-      descripcion: 'Envió la postulación. Si sigue así al cerrar la selección, no quedó.',
+      descripcion: 'Envió la postulación y todavía se está decidiendo.',
       tono: 'espera'
     },
     seleccionado: {
       etiqueta: 'Seleccionado',
       descripcion: 'Recibió un cupo y las instrucciones para pagar.',
       tono: 'bueno'
+    },
+    /* Sin este estado, "postulado" significaba a la vez "estamos
+       decidiendo" y "no quedaste", y no había forma de saber a quién
+       correspondía avisarle. */
+    no_seleccionado: {
+      etiqueta: 'No seleccionado',
+      descripcion: 'Esta vez no quedó. Puede postular a otras oportunidades.',
+      tono: 'neutro'
     },
     confirmado: {
       etiqueta: 'Confirmado',
@@ -121,12 +130,15 @@ EU.estados = {
   },
 
   /* Transiciones permitidas. Cualquier cambio fuera de esta tabla es
-     un error de programación, no una opción del usuario. */
+     un error de programación, no una opción del usuario.
+     "No seleccionado" puede volver a "seleccionado" porque pasa de
+     verdad: alguien renuncia y se llama al siguiente de la lista. */
   transicionesPostulacion: {
-    postulado:    ['seleccionado', 'renuncio'],
-    seleccionado: ['confirmado', 'renuncio'],
-    confirmado:   ['renuncio'],
-    renuncio:     []
+    postulado:       ['seleccionado', 'no_seleccionado', 'renuncio'],
+    seleccionado:    ['confirmado', 'renuncio'],
+    no_seleccionado: ['seleccionado'],
+    confirmado:      ['renuncio'],
+    renuncio:        []
   },
 
   /* ---------- Clúster de coincidencia ----------

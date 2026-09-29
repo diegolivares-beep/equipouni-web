@@ -99,6 +99,10 @@ EU.api = (function () {
 
     usuario: function () { return sesion ? sesion.usuario : null; },
     haySesion: function () { return !!(sesion && sesion.token); },
+    /* Para las subidas de archivos, que van con FormData y no pueden
+       pasar por pedir(). Nadie más debería leer el almacenamiento del
+       navegador por su cuenta: la llave de sesión vive solo acá. */
+    token: function () { return sesion ? sesion.token : ''; },
     esAdmin: function () { return !!(sesion && sesion.usuario && sesion.usuario.rol === 'admin'); },
 
     entrar: function (correo, clave) {
@@ -169,11 +173,46 @@ EU.api = (function () {
       return pedir('/api/collections/' + coleccion + '/records/' + id, { method: 'DELETE' });
     },
 
-    /* Dirección de un archivo subido (fotos de productos, documentos). */
+    /* Dirección de un archivo subido. Sirve para las fotos de producto,
+       que son públicas a propósito. Los documentos de formalización
+       están protegidos y necesitan permisoArchivo(). */
     archivo: function (registro, nombreArchivo, miniatura) {
       if (!registro || !nombreArchivo) return '';
       var u = BASE + '/api/files/' + registro.collectionId + '/' + registro.id + '/' + nombreArchivo;
       return miniatura ? u + '?thumb=' + miniatura : u;
+    },
+
+    /* Permiso de un solo uso para abrir un archivo protegido. Dura
+       pocos minutos, así que se pide al momento de abrirlo y se guarda
+       un rato para no pedir uno por cada documento de la misma ficha. */
+    permisoArchivo: (function () {
+      var guardado = null, vence = 0;
+      return function () {
+        if (guardado && Date.now() < vence) return Promise.resolve(guardado);
+        return pedir('/api/files/token', { method: 'POST' }).then(function (r) {
+          guardado = r.token;
+          vence = Date.now() + 100 * 1000;
+          return guardado;
+        });
+      };
+    })(),
+
+    /* Dirección de un documento protegido, ya con su permiso. */
+    archivoProtegido: function (registro, nombreArchivo) {
+      if (!registro || !nombreArchivo) return Promise.resolve('');
+      return EU.api.permisoArchivo().then(function (t) {
+        return EU.api.archivo(registro, nombreArchivo) + '?token=' + encodeURIComponent(t);
+      });
+    },
+
+    /* Cerrar la cuenta. El backend revisa antes que no queden
+       compromisos abiertos, y al borrar el usuario se van con él su
+       ficha, sus archivos y sus postulaciones. */
+    borrarMiCuenta: function () {
+      var u = EU.api.usuario();
+      if (!u) return Promise.reject(new Error('No hay sesión abierta.'));
+      return pedir('/api/collections/users/records/' + u.id, { method: 'DELETE' })
+        .then(function () { guardarSesion(null); });
     }
   };
 })();

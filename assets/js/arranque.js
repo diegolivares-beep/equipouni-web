@@ -19,6 +19,53 @@
 window.EU = window.EU || {};
 EU.datos = EU.datos || {};
 
+/* ---------- Búsquedas sobre lo que ya está cargado ----------
+   Las pantallas no recorren los arreglos a mano: preguntan acá. Estas cinco
+   funciones vivían en los archivos data/*.js de la maqueta y se fueron con
+   ellos al conectar el backend, pero catorce pantallas seguían llamándolas: el
+   área privada y casi todo el panel quedaron en blanco por un TypeError. Van
+   junto a EU.datos porque son derivaciones de los mismos arreglos que llena
+   este archivo, y así no pueden volver a separarse de ellos.
+
+   Se leen los arreglos en cada llamada, no al definirse, porque EU.datos se
+   rellena después y se puede recargar sin recargar la página. */
+
+EU.datos.postulacionesDe = function (idFicha) {
+  return (EU.datos.postulaciones || []).filter(function (p) {
+    return p.emprendedor === idFicha;
+  });
+};
+
+EU.datos.postulacionesA = function (idOportunidad) {
+  return (EU.datos.postulaciones || []).filter(function (p) {
+    return p.oportunidad === idOportunidad;
+  });
+};
+
+EU.datos.postulacion = function (id) {
+  var r = null;
+  (EU.datos.postulaciones || []).forEach(function (p) { if (p.id === id) r = p; });
+  return r;
+};
+
+/* "emprendedor" es la ficha: una postulación guarda el id de la ficha, y la
+   ficha es la que representa al emprendimiento. */
+EU.datos.emprendedor = function (idFicha) {
+  var r = null;
+  (EU.datos.emprendedores || []).forEach(function (f) { if (f.id === idFicha) r = f; });
+  return r;
+};
+
+/* Cuenta también las renunciadas, a propósito: la base tiene un índice único
+   por (oportunidad, ficha) sin mirar el estado, así que quien renunció tampoco
+   puede volver a postular. Si esto ignorara "renuncio", el sitio ofrecería un
+   botón que el backend va a rechazar. */
+EU.datos.yaPostulo = function (idFicha, idOportunidad) {
+  return (EU.datos.postulaciones || []).some(function (p) {
+    return p.emprendedor === idFicha && p.oportunidad === idOportunidad;
+  });
+};
+
 /* Las pantallas no corren apenas carga el archivo: esperan a que los
    datos estén. Cada módulo se anota con EU.alEstarListo() y el arranque
    los ejecuta en orden cuando termina de traer todo. */

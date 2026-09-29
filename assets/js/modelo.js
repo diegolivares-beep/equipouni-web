@@ -64,8 +64,12 @@ EU.modelo = {
     };
   },
 
+  /* Los campos que llegan como undefined NO se mandan: mandarlos como
+     vacío pisaba datos que el formulario no edita. Es lo que borraba
+     "qué no incluye" y la modalidad cada vez que se editaba una
+     oportunidad. */
   oportunidadHaciaBase: function (o) {
-    return {
+    var cuerpo = {
       nombre: o.nombre, tipo: o.tipo, organizacion: o.organizacion,
       estado: o.estado, fecha_publicacion: o.fechaPublicacion || '',
       modalidad: o.modalidad || 'presencial',
@@ -73,7 +77,8 @@ EU.modelo = {
       direccion: o.direccion, lugar: o.lugar || '',
       fecha_inicio: o.fechaInicio, fecha_termino: o.fechaTermino,
       horario: o.horario || '',
-      cupos: o.cupos, cupos_disponibles: o.cuposDisponibles,
+      cupos: o.cupos,
+      cupos_disponibles: o.cuposDisponibles,
       valor: o.valor,
       que_incluye: o.queIncluye || [], que_no_incluye: o.queNoIncluye || [],
       cierre_postulacion: o.cierrePostulacion,
@@ -86,6 +91,10 @@ EU.modelo = {
       preguntas: o.preguntas || [],
       responsable: o.responsable || '', orden: o.orden || 0
     };
+    Object.keys(cuerpo).forEach(function (k) {
+      if (cuerpo[k] === undefined) delete cuerpo[k];
+    });
+    return cuerpo;
   },
 
   /* ---------- Fichas ---------- */

@@ -27,11 +27,20 @@ EU.marca = {
   descripcion: 'Red que conecta emprendedores con oportunidades para vender, ' +
     'con postulacion en un solo lugar y seguimiento del estado de cada una.',
 
-  /* El sitio ya funciona de verdad: cuentas, fichas y postulaciones
-     quedan guardadas. Lo único de ejemplo son las oportunidades que
-     cargamos para que no naciera vacío; al reemplazarlas por las reales
-     esto pasa a false y desaparece el aviso de arriba. */
-  esMaqueta: true,
+  /* Dos cosas distintas que antes vivían en una sola bandera, y por eso
+     el sitio terminó diciendo cosas falsas sobre sí mismo.
+
+     esMaqueta: si esto es una demostración para revisar. Con esto en
+     true, el pie publica accesos al panel administrativo y el panel le
+     avisa a quien administra que sus cambios no se guardan. Desde que
+     el sitio quedó en producción escribiendo contra la base, las dos
+     cosas son mentira: va en false.
+
+     datosDeEjemplo: si las oportunidades publicadas todavía son
+     inventadas. Es verdad hasta que se carguen las reales, y hay que
+     decirlo, porque alguien podría postular a una feria que no existe. */
+  esMaqueta: false,
+  datosDeEjemplo: true,
   avisoEjemplo: 'Las oportunidades publicadas son de ejemplo mientras cargamos las reales. ' +
                 'Las cuentas y las postulaciones sí funcionan y quedan guardadas.',
 

@@ -26,6 +26,18 @@
       <h2 id="t-pendientes" style="font-size:1.35rem">Lo que requiere tu atención</h2>
       <ul class="lista-datos" id="pendientes"></ul>
     </section>
+
+    <section class="control-seccion" aria-labelledby="t-cerrar" style="margin-top:2.5rem">
+      <h2 id="t-cerrar" style="font-size:1.35rem">Cerrar mi cuenta</h2>
+      <p class="angosto">Se borran tu cuenta, tu ficha, tus fotos, tus documentos y tus
+      postulaciones. No se puede deshacer y no guardamos una copia.</p>
+      <p class="angosto">Si tienes un cupo tomado en un evento que todavía no ocurre,
+      escríbenos primero: hay una productora contando contigo.</p>
+      <p class="acciones">
+        <button type="button" class="boton boton--linea" id="cerrar-cuenta">Cerrar mi cuenta</button>
+      </p>
+      <p id="mensaje-cerrar" class="mensaje-form" role="status" aria-live="polite"></p>
+    </section>
   </div>
 </main>
 
@@ -99,6 +111,41 @@ EU.alEstarListo(function () {
   document.getElementById('pendientes').innerHTML = pendientes.map(function (p) {
     return '<li><b>' + esc(p[0]) + '</b><span>' + esc(p[1]) + '</span></li>';
   }).join('');
+});
+
+/* Cerrar la cuenta. Se pide escribir una palabra en vez de un "¿estás
+   seguro?", porque un botón de borrado irreversible no puede depender de
+   un clic distraído. */
+EU.alEstarListo(function () {
+  'use strict';
+  var boton = document.getElementById('cerrar-cuenta');
+  var aviso = document.getElementById('mensaje-cerrar');
+  if (!boton) return;
+
+  boton.addEventListener('click', function () {
+    var escrito = prompt(
+      'Esto borra tu cuenta, tu ficha y tus postulaciones, y no se puede deshacer.\n\n' +
+      'Si estás seguro, escribe BORRAR en mayúsculas.');
+    if (escrito === null) return;
+    if (escrito.trim() !== 'BORRAR') {
+      aviso.className = 'mensaje-form';
+      aviso.textContent = 'No se borró nada.';
+      return;
+    }
+    boton.disabled = true;
+    boton.textContent = 'Cerrando…';
+    aviso.className = 'mensaje-form';
+    aviso.textContent = '';
+
+    EU.api.borrarMiCuenta().then(function () {
+      location.href = 'index.html?cuenta=cerrada';
+    }).catch(function (err) {
+      boton.disabled = false;
+      boton.textContent = 'Cerrar mi cuenta';
+      aviso.className = 'mensaje-form mensaje-form--error';
+      aviso.textContent = err.message || 'No se pudo cerrar la cuenta.';
+    });
+  });
 });
 </script>
 </body>

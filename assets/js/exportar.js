@@ -24,6 +24,17 @@ EU.exportar = {
     var hoy = new Date();
     var fecha = hoy.getDate() + ' de ' + EU.util.MESES[hoy.getMonth()] + ' de ' + hoy.getFullYear();
 
+    /* El título sale de lo que hay en la lista, no de una frase fija.
+       Antes decía siempre "Postulantes seleccionados" aunque se
+       exportaran postulantes que no lo estaban, y en este punto del
+       proceso normalmente todavía no hay nadie seleccionado. */
+    var estados = {};
+    filas.forEach(function (x) { estados[x.postulacion.estado] = true; });
+    var soloUno = Object.keys(estados);
+    var titulo = soloUno.length === 1
+      ? EU.estados.etiqueta('postulacion', soloUno[0]) + 's'
+      : 'Postulantes';
+
     var fichas = filas.map(function (x, i) {
       var p = x.postulacion, f = x.ficha;
       if (!f) return '';
@@ -55,8 +66,12 @@ EU.exportar = {
             '<span class="estado-pdf">' + esc(EU.estados.etiqueta('postulacion', p.estado)) + '</span>' +
           '</header>' +
           '<table class="datos-pdf">' +
-            '<tr><td class="pregunta">Representante</td><td>' + esc(f.representante.nombre) +
-              ' · RUT ' + esc(f.representante.rut) + '</td></tr>' +
+            /* El RUT NO va acá. Es dato personal, la productora no lo
+               necesita para decidir a quién dar un puesto, y al postular
+               se le dijo al emprendedor que no se comparte. Si algún día
+               hace falta (una factura, un seguro), se pide aparte y con
+               su consentimiento, no de rutina para todos. */
+            '<tr><td class="pregunta">Representante</td><td>' + esc(f.representante.nombre) + '</td></tr>' +
             '<tr><td class="pregunta">Contacto</td><td>' + esc(f.representante.correo) +
               ' · ' + esc(f.representante.telefono) + '</td></tr>' +
             '<tr><td class="pregunta">Qué vende</td><td>' + esc(f.emprendimiento.descripcion) + '</td></tr>' +
@@ -65,7 +80,7 @@ EU.exportar = {
             '<tr><td class="pregunta">Documentos</td><td>' +
               (docs.length ? esc(docs.join(' · ')) : 'Ninguno declarado') + '</td></tr>' +
             '<tr><td class="pregunta">Coincidencia</td><td>' +
-              esc(EU.estados.clusterInfo[x.cluster].etiqueta) + ': ' + esc(x.razon) + '</td></tr>' +
+              esc(EU.estados.info('cluster', x.cluster).etiqueta) + ': ' + esc(x.razon) + '</td></tr>' +
             respuestas +
           '</table>' +
         '</article>';
@@ -76,7 +91,7 @@ EU.exportar = {
         '<header class="cabecera-pdf">' +
           '<img src="assets/marca/cliente-logo.png" alt="' + esc(EU.marca.nombre) + '" class="logo-pdf">' +
           '<div class="meta-pdf">' +
-            '<strong>Postulantes seleccionados</strong>' +
+            '<strong>' + esc(titulo) + '</strong>' +
             '<span>Documento generado el ' + fecha + '</span>' +
           '</div>' +
         '</header>' +
@@ -89,8 +104,15 @@ EU.exportar = {
         '<p class="conteo-pdf">' + filas.length +
           (filas.length === 1 ? ' emprendimiento' : ' emprendimientos') + ' en esta lista</p>' +
         fichas +
+        /* La productora recibe datos de contacto de terceros: tiene que
+           saber para qué puede usarlos. Decirlo en el documento es lo
+           que permite sostener después que se informó. */
         '<footer class="pie-pdf">' + esc(EU.marca.nombre) +
-          ' · ' + esc(EU.marca.contacto.correo) + '</footer>' +
+          ' · ' + esc(EU.marca.contacto.correo) + '<br>' +
+          'Estos datos se entregan sólo para organizar ' + esc(oportunidad.nombre) +
+          '. No se pueden usar para otra cosa ni compartir con terceros, y conviene ' +
+          'eliminarlos una vez terminado el evento.' +
+        '</footer>' +
       '</div>';
   },
 
