@@ -99,11 +99,11 @@ EU.alEstarListo(function () {
          cambia con él: decir de menos acá es comprometer datos de una
          persona sin habérselo dicho. */
       '<p class="nota">Si postulas, quien organiza ' + esc(o.nombre) + ' va a recibir estos ' +
-      'datos y además el nombre de quien representa, el teléfono de contacto, la ' +
-      'descripción y las redes de tu emprendimiento, qué documentos de formalización ' +
-      'declaraste tener y tus respuestas a las preguntas de más abajo. No recibe tu RUT ' +
-      'ni los archivos que subiste. <a href="cuenta-ficha.html">Revisar mi ficha</a> ' +
-      'antes de enviar.</p>' +
+      'datos y además el nombre de quien representa, el teléfono de contacto, tus redes, ' +
+      'tus tres productos más vendidos, las etiquetas con las que quedó clasificado tu ' +
+      'emprendimiento, qué documentos de formalización declaraste tener y tus respuestas a ' +
+      'las preguntas de más abajo. No recibe tu RUT ni los archivos que subiste. ' +
+      '<a href="cuenta-ficha.html">Revisar mi ficha</a> antes de enviar.</p>' +
     '</div>' +
     (puedeFicha ? '' :
       '<p class="aviso-categoria">Tu ficha está en estado "' +

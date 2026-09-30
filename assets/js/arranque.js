@@ -114,6 +114,22 @@ EU.arranque = (function () {
     document.documentElement.classList.toggle('cargando', !!si);
   }
 
+  /* El catálogo de rubros y subrubros, que el cliente administra desde el
+     panel. Va con su propio catch a propósito y NO dentro del Promise.all
+     de más abajo: si esta consulta falla, el sitio sigue con el catálogo
+     de respaldo que viene en config/catalogo.js. Meterla en el Promise.all
+     haría que un catálogo caído tumbe la pantalla completa, que es el
+     error que dejó el área privada en blanco el 29-sep. */
+  function traerCatalogo() {
+    return EU.api.listar('catalogo', { orden: 'orden' })
+      .then(function (items) { EU.catalogo.cargarDesde(items); })
+      .catch(function () {
+        if (console && console.warn) {
+          console.warn('No se pudo traer el catálogo: se usa el de respaldo.');
+        }
+      });
+  }
+
   /* Trae las oportunidades que el visitante puede ver. Quien no tiene
      sesión recibe solo las publicadas: lo impone el backend, no esto. */
   function traerOportunidades() {
@@ -182,6 +198,7 @@ EU.arranque = (function () {
          cabecera muestre el nombre y el botón correcto. */
       var previo = EU.api.haySesion() ? EU.api.revalidar() : Promise.resolve(null);
       previo
+        .then(traerCatalogo)
         .then(traerOportunidades)
         .then(function () { cargando(false); if (alTerminar) alTerminar(); EU._marcarListo(); })
         .catch(fallo);
@@ -195,7 +212,9 @@ EU.arranque = (function () {
       }
       EU.api.revalidar().then(function (u) {
         if (!u) throw { estado: 401 };
-        return Promise.all([traerOportunidades(), traerMiFicha(), traerMisPostulaciones()]);
+        return traerCatalogo().then(function () {
+          return Promise.all([traerOportunidades(), traerMiFicha(), traerMisPostulaciones()]);
+        });
       }).then(function () { cargando(false); if (alTerminar) alTerminar(); EU._marcarListo(); })
         .catch(fallo);
     },
@@ -214,12 +233,15 @@ EU.arranque = (function () {
                 'Tu cuenta no tiene permisos de administración.');
           throw { manejado: true };
         }
-        return Promise.all([traerOportunidades(), traerTodoAdmin()]);
+        return traerCatalogo().then(function () {
+          return Promise.all([traerOportunidades(), traerTodoAdmin()]);
+        });
       }).then(function () { cargando(false); if (alTerminar) alTerminar(); EU._marcarListo(); })
         .catch(function (e) { if (!e || !e.manejado) fallo(e); });
     },
 
     /* Para recargar datos después de guardar algo, sin recargar la página. */
+    recargarCatalogo: traerCatalogo,
     recargarOportunidades: traerOportunidades,
     recargarMiFicha: traerMiFicha,
     recargarAdmin: traerTodoAdmin

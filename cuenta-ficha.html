@@ -24,6 +24,9 @@
     <p class="angosto">Esta es la información que ven quienes organizan las oportunidades
     a las que postulas. Si cambias un dato ya validado, solo esa sección vuelve a
     revisión; el resto de tu ficha sigue vigente.</p>
+    <p class="angosto pista">Revisar una ficha nos toma entre 3 y 5 días hábiles. Te
+    escribimos por correo cuando quede lista o si hay algo que corregir: no necesitas
+    entrar a mirar.</p>
 
     <div id="observaciones"></div>
 
@@ -91,40 +94,61 @@
           </label>
           <textarea id="emp-descripcion" name="emp-descripcion" required maxlength="400"></textarea>
         </div>
-        <div class="campo">
-          <label for="emp-instagram">Instagram, Facebook o web</label>
-          <input type="url" id="emp-instagram" name="emp-instagram" inputmode="url">
+        <div class="campo campo--fila">
+          <div>
+            <label for="emp-instagram">Instagram</label>
+            <input type="url" id="emp-instagram" name="emp-instagram" inputmode="url"
+                   placeholder="https://instagram.com/tumarca">
+          </div>
+          <div>
+            <label for="emp-web">Otra red o página web</label>
+            <input type="url" id="emp-web" name="emp-web" inputmode="url"
+                   placeholder="https://facebook.com/tumarca">
+          </div>
         </div>
       </fieldset>
 
       <fieldset data-seccion="clasificacion">
         <legend>Qué vendes <span data-estado-seccion="clasificacion"></span></legend>
-        <div class="campo campo--fila">
-          <div>
-            <label for="cla-rubro">Rubro principal</label>
-            <select id="cla-rubro" name="cla-rubro" required>
-              <option value="">Elige uno</option>
-            </select>
-          </div>
+        <div class="campo">
+          <label for="cla-que-vende">Cuéntanos qué vendes, en tus palabras
+            <span class="pista">Con esto el equipo clasifica tu emprendimiento. Sé
+            concreto: qué productos haces, con qué materiales, para quién.</span>
+          </label>
+          <textarea id="cla-que-vende" name="cla-que-vende" required maxlength="400"
+                    rows="4"></textarea>
         </div>
         <div class="campo">
-          <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.3rem">Subrubros
-            <span class="pista">Dependen del rubro. Puedes marcar más de uno.</span>
-          </span>
-          <div id="zona-subrubros"></div>
+          <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.3rem">Cómo quedó clasificado</span>
+          <div id="clasificacion-asignada"></div>
         </div>
-        <div class="campo" id="campo-otro" hidden>
-          <label for="cla-otro">Cuéntanos qué vendes
-            <span class="pista">Al marcar "Otro", una persona del equipo revisa tu caso.</span>
-          </label>
-          <input type="text" id="cla-otro" name="cla-otro" maxlength="120">
-        </div>
-        <div id="zona-tipos"></div>
-        <div id="aviso-rubro"></div>
       </fieldset>
 
       <fieldset data-seccion="productos">
         <legend>Tus productos <span data-estado-seccion="productos"></span></legend>
+        <div class="campo">
+          <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.3rem">Tus 3 productos más vendidos
+            <span class="pista">Es lo primero que mira quien organiza para decidir si
+            calzas con su público.</span>
+          </span>
+          <div class="campo campo--fila">
+            <div><input type="text" id="pro-top1" name="pro-top1" maxlength="80" placeholder="Producto 1"></div>
+            <div><input type="text" id="pro-top2" name="pro-top2" maxlength="80" placeholder="Producto 2"></div>
+            <div><input type="text" id="pro-top3" name="pro-top3" maxlength="80" placeholder="Producto 3"></div>
+          </div>
+        </div>
+        <div class="campo">
+          <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem">Logo del emprendimiento</span>
+          <div id="logo-actual"></div>
+          <p style="margin:.7rem 0 0">
+            <label for="subir-logo" class="boton boton--linea" style="cursor:pointer">Subir logo</label>
+            <input type="file" id="subir-logo" accept="image/jpeg,image/png,image/webp"
+                   style="position:absolute;left:-9999px">
+          </p>
+          <p class="pista">No es obligatorio, pero conviene: muchas productoras lo piden
+          para armar su difusión.</p>
+          <p id="aviso-logo" class="mensaje-form" style="min-height:0"></p>
+        </div>
         <div class="campo">
           <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem">Fotografías actuales</span>
           <div class="fotos-ficha" id="fotos-actuales"></div>

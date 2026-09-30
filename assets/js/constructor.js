@@ -227,6 +227,7 @@ EU.alEstarListo(function () {
     f.elements.requisitos.value = (original.requisitos || []).join('\n');
     f.elements.imagenAlt.value = original.imagenAlt || '';
     f.elements.plazoPago.value = original.plazoPago || '';
+    f.elements.datosTransferencia.value = original.datosTransferencia || '';
     f.elements.asistencia.value = original.asistencia || '';
     f.elements.cancelacion.value = original.cancelacion || '';
     f.elements.estado.value = original.estado;
@@ -312,6 +313,7 @@ EU.alEstarListo(function () {
       queNoIncluye: comoLineas(f.elements.queNoIncluye.value),
       requisitos: comoLineas(f.elements.requisitos.value),
       plazoPago: f.elements.plazoPago.value.trim(),
+      datosTransferencia: f.elements.datosTransferencia.value.trim(),
       asistencia: f.elements.asistencia.value.trim(),
       cancelacion: f.elements.cancelacion.value.trim(),
       rubrosBuscados: Array.prototype.map.call(

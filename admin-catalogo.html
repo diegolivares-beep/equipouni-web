@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..700&family=Manrope:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-titulo="Catálogo">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div id="cabecera"></div>
+
+<main id="contenido" class="bloque">
+  <div class="envoltura">
+    <div class="encabezado-bloque">
+      <h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">Catálogo de rubros</h1>
+      <p id="resumen" class="resumen-filtros"></p>
+    </div>
+    <p class="angosto">Los rubros y subrubros con los que clasificas las fichas y con los
+    que el público filtra el tablero. Agrega los que necesites a medida que aparezcan
+    emprendimientos que no calzan en ninguno.</p>
+    <p class="angosto pista">Un rubro que ya usan fichas no se puede borrar sin dejarlas
+    apuntando a una categoría que no existe. Para sacarlo de circulación sin romper nada,
+    desactívalo: deja de ofrecerse a futuro y las fichas que ya lo tienen siguen
+    funcionando.</p>
+
+    <p id="mensaje" class="mensaje-form" role="status" aria-live="polite"></p>
+
+    <form class="formulario" id="form-nuevo" style="max-width:720px;margin-bottom:1.6rem">
+      <fieldset>
+        <legend>Agregar</legend>
+        <div class="campo campo--fila">
+          <div>
+            <label for="n-tipo">Qué es</label>
+            <select id="n-tipo" name="n-tipo">
+              <option value="rubro">Un rubro nuevo</option>
+              <option value="subrubro">Un subrubro dentro de un rubro</option>
+            </select>
+          </div>
+          <div id="campo-padre" hidden>
+            <label for="n-padre">Dentro de</label>
+            <select id="n-padre" name="n-padre"></select>
+          </div>
+        </div>
+        <div class="campo campo--fila">
+          <div>
+            <label for="n-nombre">Nombre
+              <span class="pista">Como lo va a leer la gente.</span>
+            </label>
+            <input type="text" id="n-nombre" name="n-nombre" maxlength="100" required>
+          </div>
+          <div>
+            <label for="n-clave">Identificador
+              <span class="pista">Se calcula solo. No se cambia nunca más.</span>
+            </label>
+            <input type="text" id="n-clave" name="n-clave" maxlength="40" required
+                   pattern="[a-z0-9-]+">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="n-aviso">Aviso para quien lo elija (opcional)
+            <span class="pista">Por ejemplo, que ese rubro necesita resolución sanitaria.</span>
+          </label>
+          <input type="text" id="n-aviso" name="n-aviso" maxlength="280">
+        </div>
+        <p><button class="boton" type="submit">Agregar al catálogo</button></p>
+      </fieldset>
+    </form>
+
+    <div id="listado"></div>
+  </div>
+</main>
+
+<script src="config/marca.js"></script>
+<script src="config/territorio.js"></script>
+<script src="config/catalogo.js"></script>
+<script src="config/estados.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/modelo.js"></script>
+<script src="assets/js/nucleo.js"></script>
+<script src="assets/js/arranque.js"></script>
+<script src="assets/js/clusters.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+EU.arranque.admin(function () { EU.admin.montar(); });
+EU.alEstarListo(function () {
+  'use strict';
+  var esc = EU.util.esc;
+  var mensaje = document.getElementById('mensaje');
+  var listado = document.getElementById('listado');
+  var f = document.getElementById('form-nuevo');
+
+  /* Esta pantalla trabaja con las FILAS de la colección, no con el árbol
+     que arma EU.catalogo: necesita el id del registro para editarlo y las
+     filas desactivadas, que el árbol descarta a propósito. */
+  var filas = [];
+
+  function avisar(texto, esError) {
+    mensaje.textContent = texto;
+    mensaje.className = 'mensaje-form' + (esError ? ' mensaje-form--error' : '');
+  }
+
+  function traer() {
+    return EU.api.listar('catalogo', { orden: 'orden' }).then(function (items) {
+      filas = items;
+      return items;
+    });
+  }
+
+  /* Cuántas fichas usan una clave. Es lo que decide si se puede borrar. */
+  function usos(clave) {
+    var n = 0;
+    (EU.datos.emprendedores || []).forEach(function (fi) {
+      if (fi.clasificacion.rubro === clave) n++;
+      else if (EU.catalogo.subrubrosDe(fi.clasificacion).indexOf(clave) !== -1) n++;
+    });
+    return n;
+  }
+
+  function rubros() {
+    return filas.filter(function (x) { return !x.padre; })
+      .sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+  }
+
+  function subrubrosDe(clave) {
+    return filas.filter(function (x) { return x.padre === clave; })
+      .sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+  }
+
+  function fila(x, esSub) {
+    var n = usos(x.clave);
+    var inactivo = x.activo === false;
+    return '<tr' + (inactivo ? ' style="opacity:.55"' : '') + '>' +
+      '<td>' + (esSub ? '<span style="color:var(--tinta-2)">· </span>' : '') +
+        '<strong>' + esc(x.nombre) + '</strong>' +
+        '<small>' + esc(x.clave) + (inactivo ? ' · desactivado' : '') + '</small></td>' +
+      '<td>' + (esSub ? 'Subrubro' : 'Rubro') + '</td>' +
+      '<td class="num">' + n + '</td>' +
+      '<td>' +
+        '<button type="button" class="enlace-boton" data-activar="' + esc(x.id) + '">' +
+          (inactivo ? 'Reactivar' : 'Desactivar') + '</button>' +
+        (n === 0
+          ? ' · <button type="button" class="enlace-boton" data-borrar="' + esc(x.id) + '">Borrar</button>'
+          : '') +
+      '</td>' +
+    '</tr>';
+  }
+
+  function render() {
+    var rs = rubros();
+    document.getElementById('resumen').textContent =
+      rs.length + ' rubros y ' +
+      filas.filter(function (x) { return x.padre; }).length + ' subrubros';
+
+    /* El selector de "dentro de" se rearma con los rubros vigentes. */
+    document.getElementById('n-padre').innerHTML = rs.map(function (r) {
+      return '<option value="' + esc(r.clave) + '">' + esc(r.nombre) + '</option>';
+    }).join('');
+
+    if (!rs.length) {
+      listado.innerHTML = '<div class="sin-resultados"><h2>El catálogo está vacío</h2>' +
+        '<p>Agrega el primer rubro con el formulario de arriba.</p></div>';
+      return;
+    }
+
+    var cuerpo = '';
+    rs.forEach(function (r) {
+      cuerpo += fila(r, false);
+      subrubrosDe(r.clave).forEach(function (s) { cuerpo += fila(s, true); });
+    });
+
+    listado.innerHTML =
+      '<div class="tabla-envoltura"><table class="tabla">' +
+        '<thead><tr><th>Nombre</th><th>Qué es</th>' +
+        '<th class="num">Fichas que lo usan</th><th></th></tr></thead>' +
+        '<tbody>' + cuerpo + '</tbody>' +
+      '</table></div>';
+  }
+
+  /* El identificador se propone desde el nombre y no se vuelve a tocar si
+     el equipo lo editó a mano: es la llave estable de las fichas. */
+  var claveTocada = false;
+  document.getElementById('n-clave').addEventListener('input', function () {
+    claveTocada = true;
+  });
+  document.getElementById('n-nombre').addEventListener('input', function () {
+    if (claveTocada) return;
+    document.getElementById('n-clave').value = this.value
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+  });
+
+  document.getElementById('n-tipo').addEventListener('change', function () {
+    document.getElementById('campo-padre').hidden = this.value !== 'subrubro';
+  });
+
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!f.checkValidity()) { f.reportValidity(); return; }
+    var esSub = document.getElementById('n-tipo').value === 'subrubro';
+    var clave = document.getElementById('n-clave').value.trim();
+    var padre = esSub ? document.getElementById('n-padre').value : '';
+
+    if (esSub && !padre) {
+      avisar('Elige dentro de qué rubro va.', true);
+      return;
+    }
+    /* Se revisa acá además del índice único de la base, para poder decir
+       cuál es la fila repetida en vez de un error de unicidad. */
+    var choca = filas.filter(function (x) { return x.clave === clave; })[0];
+    if (choca) {
+      avisar('Ya existe "' + choca.nombre + '" con ese identificador. Cámbialo.', true);
+      return;
+    }
+
+    var hermanos = esSub ? subrubrosDe(padre) : rubros();
+    var ultimo = hermanos.length ? (hermanos[hermanos.length - 1].orden || 0) : 0;
+
+    var boton = f.querySelector('button[type="submit"]');
+    boton.disabled = true;
+    EU.api.crear('catalogo', {
+      clave: clave,
+      nombre: document.getElementById('n-nombre').value.trim(),
+      padre: padre,
+      aviso: document.getElementById('n-aviso').value.trim(),
+      tipos: [],
+      orden: ultimo + 10,
+      activo: true
+    }).then(function () {
+      return traer();
+    }).then(function (items) {
+      /* El catálogo vive en memoria en EU.catalogo: se recarga para que el
+         cambio se vea también en Validaciones sin recargar la página. */
+      EU.catalogo.cargarDesde(items);
+      f.reset();
+      claveTocada = false;
+      document.getElementById('campo-padre').hidden = true;
+      boton.disabled = false;
+      avisar('Agregado. Ya se puede usar en Validaciones.');
+      render();
+    }).catch(function (err) {
+      boton.disabled = false;
+      avisar(err.message || 'No se pudo agregar.', true);
+    });
+  });
+
+  listado.addEventListener('click', function (e) {
+    var b = e.target;
+    var id = b.getAttribute && (b.getAttribute('data-activar') || b.getAttribute('data-borrar'));
+    if (!id) return;
+    var x = filas.filter(function (y) { return y.id === id; })[0];
+    if (!x) return;
+
+    var accion;
+    if (b.hasAttribute('data-borrar')) {
+      if (usos(x.clave)) { avisar('Esa categoría la usan fichas: desactívala.', true); return; }
+      /* Borrar un rubro que tiene subrubros dejaría a los hijos
+         huérfanos, y el catálogo los descarta en silencio: se avisa. */
+      if (!x.padre && subrubrosDe(x.clave).length) {
+        avisar('Tiene subrubros dentro. Bórralos o muévelos primero.', true);
+        return;
+      }
+      if (!window.confirm('Borrar "' + x.nombre + '" del catálogo?')) return;
+      accion = EU.api.borrar('catalogo', id);
+    } else {
+      accion = EU.api.actualizar('catalogo', id, { activo: x.activo === false });
+    }
+
+    b.disabled = true;
+    accion.then(function () { return traer(); }).then(function (items) {
+      EU.catalogo.cargarDesde(items);
+      avisar('Catálogo actualizado.');
+      render();
+    }).catch(function (err) {
+      b.disabled = false;
+      avisar(err.message || 'No se pudo guardar el cambio.', true);
+    });
+  });
+
+  traer().then(render).catch(function (err) {
+    avisar(err.message || 'No se pudo traer el catálogo.', true);
+  });
+});
+</script>
+</body>
+</html>

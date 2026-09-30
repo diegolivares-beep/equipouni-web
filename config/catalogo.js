@@ -317,3 +317,57 @@ EU.catalogo.paraSelector = function () {
     return { valor: r.id, texto: r.nombre };
   });
 };
+
+/* ---------- El catálogo real viene de la base ----------
+   Desde el 30-sep el cliente administra sus propios rubros desde el
+   panel, así que la lista de arriba dejó de ser la verdad: es el
+   respaldo. El arranque pide la colección "catalogo" y llama a esta
+   función, que rearma EU.catalogo.rubros con esas filas.
+
+   Todo el sitio consulta el catálogo a través de EU.catalogo.rubro(),
+   subrubros(), nombre() y compañía, y esas funciones leen el arreglo en
+   cada llamada. Por eso basta con reemplazarlo acá: ni el tablero, ni
+   los clústeres, ni el panel, ni la validación de datos se enteran.
+
+   Si la petición falla, no se llama a esto y queda la lista de arriba.
+   Es a propósito: es mejor un catálogo viejo que una pantalla en blanco,
+   que es exactamente lo que pasó el 29-sep cuando una consulta caída se
+   llevó puesta el área privada completa. */
+
+EU.catalogo.deLaBase = false;
+
+EU.catalogo.cargarDesde = function (filas) {
+  if (!filas || !filas.length) return false;
+
+  var porClave = {};
+  var rubros = [];
+
+  /* Primero los rubros (los que no tienen padre), en su orden. */
+  filas.filter(function (f) { return !f.padre && f.activo !== false; })
+    .sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); })
+    .forEach(function (f) {
+      var r = { id: f.clave, nombre: f.nombre, subrubros: [] };
+      if (f.aviso) r.avisa = f.aviso;
+      porClave[f.clave] = r;
+      rubros.push(r);
+    });
+
+  if (!rubros.length) return false;
+
+  /* Y después los subrubros dentro del suyo. Un subrubro cuyo padre no
+     existe se descarta en vez de inventarle un rubro: así un dato a
+     medio migrar no aparece como categoría fantasma en los filtros. */
+  filas.filter(function (f) { return f.padre && f.activo !== false; })
+    .sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); })
+    .forEach(function (f) {
+      var padre = porClave[f.padre];
+      if (!padre) return;
+      var s = { id: f.clave, nombre: f.nombre, tipos: f.tipos || [] };
+      if (f.aviso) s.avisa = f.aviso;
+      padre.subrubros.push(s);
+    });
+
+  EU.catalogo.rubros = rubros;
+  EU.catalogo.deLaBase = true;
+  return true;
+};

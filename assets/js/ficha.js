@@ -1,12 +1,16 @@
 /* ============================================================
    MI FICHA: formulario de la ficha única
    ------------------------------------------------------------
-   Reglas de la especificación que esta pantalla hace visibles:
+   Reglas que esta pantalla hace visibles:
 
-   - El subrubro depende del rubro, y los tipos de producto dependen
-     del subrubro. Los selectores se repueblan en cadena.
-   - "Otro" existe en rubro y subrubro, pide detalle y deriva la
-     clasificación a revisión humana.
+   - EL EMPRENDEDOR NO ELIGE SU RUBRO. Lo decidió el cliente el
+     30-sep: antes había 12 rubros y 53 subrubros en un selector, y
+     cada persona se clasificaba sola, con el resultado previsible de
+     emprendimientos mal catalogados y un catálogo que no podía
+     crecer. Ahora él cuenta qué vende en sus palabras y el equipo le
+     asigna rubro, subrubros y etiquetas al validar. Acá la
+     clasificación se MUESTRA y no se edita; el backend además la
+     repone si alguien la manda por su cuenta.
    - Si cambia un dato de una sección validada, ESA sección vuelve a
      "pendiente de validación" sin tocar las demás. Acá se simula en
      vivo al editar.
@@ -25,10 +29,11 @@ EU.alEstarListo(function () {
     id: null, estado: 'incompleta',
     representante: { nombre: usuario.nombre || '', rut: '', correo: usuario.email || '',
                      telefono: usuario.telefono || '', comuna: '', contactoPreferido: 'whatsapp' },
-    emprendimiento: { nombre: '', comuna: '', anoInicio: '', descripcion: '', instagram: '' },
-    clasificacion: { rubro: '', subrubros: [], tipos: [], otroDetalle: '' },
-    productos: { fotos: [], personaliza: false, detallePersonaliza: '' },
-    formalizacion: {}, documentos: [], observaciones: {}
+    emprendimiento: { nombre: '', comuna: '', anoInicio: '', descripcion: '',
+                      instagram: '', web: '', logo: '' },
+    clasificacion: { rubro: '', subrubros: [], tipos: [], otroDetalle: '', queVende: '' },
+    productos: { fotos: [], personaliza: false, detallePersonaliza: '', masVendidos: [] },
+    etiquetas: [], formalizacion: {}, documentos: [], observaciones: {}
   };
 
   /* Estado por sección: con observación pendiente es corrección; si no,
@@ -106,6 +111,14 @@ EU.alEstarListo(function () {
   f.elements['emp-ano'].value = em.anoInicio;
   f.elements['emp-descripcion'].value = em.descripcion;
   f.elements['emp-instagram'].value = em.instagram || '';
+  f.elements['emp-web'].value = em.web || '';
+
+  f.elements['cla-que-vende'].value = ficha.clasificacion.queVende || '';
+
+  var top = ficha.productos.masVendidos || [];
+  f.elements['pro-top1'].value = top[0] || '';
+  f.elements['pro-top2'].value = top[1] || '';
+  f.elements['pro-top3'].value = top[2] || '';
 
   /* Comunas desde el territorio */
   ['rep-comuna', 'emp-comuna'].forEach(function (id) {
@@ -119,111 +132,37 @@ EU.alEstarListo(function () {
   f.elements['rep-comuna'].value = r.comuna;
   f.elements['emp-comuna'].value = em.comuna;
 
-  /* ---------- Clasificación dependiente ---------- */
+  /* ---------- Clasificación: solo se mira ----------
+     La pone el equipo al validar. Mientras no exista, se dice qué falta
+     y por qué, en vez de mostrar un espacio vacío que no se entiende. */
 
-  var selRubro = f.elements['cla-rubro'];
-  var zonaSubrubros = document.getElementById('zona-subrubros');
-  var zonaTipos = document.getElementById('zona-tipos');
-  var campoOtro = document.getElementById('campo-otro');
+  function pintarClasificacion(fi) {
+    var zona = document.getElementById('clasificacion-asignada');
+    if (!zona) return;
+    var c = fi.clasificacion || {};
+    var etiquetas = fi.etiquetas || [];
 
-  EU.catalogo.rubros.forEach(function (ru) {
-    var op = document.createElement('option');
-    op.value = ru.id; op.textContent = ru.nombre;
-    selRubro.appendChild(op);
-  });
-  /* El brief pide "uno o varios subrubros", asi que van como casillas.
-     El tope sale de EU.catalogo.MAX_SUBRUBROS (0 = sin limite). */
-  function poblarSubrubros(idRubro, marcados) {
-    var lista = EU.catalogo.subrubros(idRubro);
-    marcados = marcados || [];
-    if (!lista.length) {
-      zonaSubrubros.innerHTML = idRubro === EU.catalogo.OTRO
-        ? '<p class="pista">Este rubro no tiene subrubros: lo revisa una persona.</p>'
-        : '<p class="pista">Elige primero un rubro.</p>';
+    if (!c.rubro) {
+      zona.innerHTML = '<p class="pista">Todavía no está clasificado. Lo hace el equipo ' +
+        'de ' + esc(EU.marca.nombre) + ' cuando revise tu ficha, a partir de lo que ' +
+        'escribiste arriba.</p>';
       return;
     }
-    var tope = EU.catalogo.MAX_SUBRUBROS;
-    zonaSubrubros.innerHTML =
-      '<p class="pista" style="margin:.2rem 0 .5rem">Marca todos los que correspondan' +
-      (tope ? ', hasta ' + tope : '') + ':</p>' +
-      lista.map(function (s) {
-        var con = marcados.indexOf(s.id) !== -1 ? ' checked' : '';
-        return '<label class="casilla"><input type="checkbox" name="cla-subrubros" value="' +
-          esc(s.id) + '"' + con + '><span>' + esc(s.nombre) + '</span></label>';
-      }).join('') +
-      '<p class="mensaje-form" id="aviso-subrubros" style="min-height:0"></p>';
+
+    var nombreRubro = EU.catalogo.nombre(c.rubro);
+    var subs = EU.catalogo.nombresSubrubros(c);
+    zona.innerHTML =
+      '<p style="margin:0"><strong>' + esc(nombreRubro) + '</strong>' +
+      (subs.length ? ' · ' + esc(subs.join(', ')) : '') + '</p>' +
+      (etiquetas.length
+        ? '<p style="margin:.35rem 0 0;font-size:.9rem;color:var(--tinta-2)">' +
+          esc(etiquetas.join(' · ')) + '</p>'
+        : '') +
+      '<p class="pista" style="margin:.4rem 0 0">Lo asignó el equipo. Si crees que no ' +
+      'corresponde, escríbenos y lo revisamos.</p>';
   }
 
-  function subrubrosMarcados() {
-    return Array.prototype.map.call(
-      f.querySelectorAll('[name="cla-subrubros"]:checked'),
-      function (c) { return c.value; });
-  }
-
-  /* Al marcar subrubros se rearman los tipos de producto de todos ellos,
-     conservando lo que el emprendedor ya tenia marcado. */
-  function alCambiarSubrubros() {
-    var marcados = subrubrosMarcados();
-    var tope = EU.catalogo.MAX_SUBRUBROS;
-    var aviso = document.getElementById('aviso-subrubros');
-    if (tope && marcados.length > tope) {
-      if (aviso) {
-        aviso.textContent = 'Puedes marcar hasta ' + tope + '.';
-        aviso.className = 'mensaje-form mensaje-form--error';
-      }
-    } else if (aviso) {
-      aviso.textContent = ''; aviso.className = 'mensaje-form';
-    }
-    poblarTipos(marcados, tiposMarcados());
-  }
-
-  function tiposMarcados() {
-    return Array.prototype.map.call(
-      f.querySelectorAll('[name="cla-tipos"]:checked'),
-      function (c) { return c.value; });
-  }
-
-  function poblarTipos(idsSubrubro, marcados) {
-    var tipos = [];
-    (idsSubrubro || []).forEach(function (id) {
-      EU.catalogo.tipos(id).forEach(function (x) {
-        if (tipos.indexOf(x) === -1) tipos.push(x);
-      });
-    });
-    if (!tipos.length) { zonaTipos.innerHTML = ''; return; }
-    zonaTipos.innerHTML = '<p class="pista" style="margin:.2rem 0 .5rem">' +
-      'Marca los tipos de producto que vendes:</p>' +
-      tipos.map(function (t) {
-        var con = (marcados || []).indexOf(t) !== -1 ? ' checked' : '';
-        return '<label class="casilla"><input type="checkbox" name="cla-tipos" value="' +
-          esc(t) + '"' + con + '><span>' + esc(t) + '</span></label>';
-      }).join('');
-  }
-
-  function mostrarAvisoRubro(idRubro) {
-    var ru = EU.catalogo.rubro(idRubro);
-    var zona = document.getElementById('aviso-rubro');
-    zona.innerHTML = (ru && ru.avisa)
-      ? '<p class="aviso-categoria">' + esc(ru.avisa) + '</p>' : '';
-  }
-
-  selRubro.addEventListener('change', function () {
-    var v = selRubro.value;
-    campoOtro.hidden = v !== EU.catalogo.OTRO;
-    poblarSubrubros(v, []);
-    zonaTipos.innerHTML = '';
-    mostrarAvisoRubro(v);
-  });
-  zonaSubrubros.addEventListener('change', alCambiarSubrubros);
-
-  /* Estado inicial de la clasificación */
-  selRubro.value = ficha.clasificacion.rubro;
-  campoOtro.hidden = ficha.clasificacion.rubro !== EU.catalogo.OTRO;
-  f.elements['cla-otro'].value = ficha.clasificacion.otroDetalle || '';
-  var subsIniciales = EU.catalogo.subrubrosDe(ficha.clasificacion);
-  poblarSubrubros(ficha.clasificacion.rubro, subsIniciales);
-  poblarTipos(subsIniciales, ficha.clasificacion.tipos);
-  mostrarAvisoRubro(ficha.clasificacion.rubro);
+  pintarClasificacion(ficha);
 
   /* ---------- Productos y formalización ---------- */
 
@@ -251,19 +190,15 @@ EU.alEstarListo(function () {
   f.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!f.checkValidity()) { f.reportValidity(); return; }
-    var subs = subrubrosMarcados();
-    var tope = EU.catalogo.MAX_SUBRUBROS;
-    if (selRubro.value && selRubro.value !== EU.catalogo.OTRO && !subs.length) {
-      avisar('Marca al menos un subrubro: es lo que usan las oportunidades para encontrarte.', true);
-      return;
-    }
-    if (tope && subs.length > tope) {
-      avisar('Puedes marcar hasta ' + tope + ' subrubros.', true);
-      return;
-    }
-    if (selRubro.value === EU.catalogo.OTRO && !f.elements['cla-otro'].value.trim()) {
-      avisar('Si marcas "Otro", cuéntanos en una línea qué vendes.', true);
-      f.elements['cla-otro'].focus();
+    /* Lo único que se exige de más: que "qué vendes" diga algo. Es lo que
+       el equipo va a leer para clasificar, así que una línea de tres
+       palabras deja la ficha imposible de resolver. El mínimo es corto a
+       propósito, para no convertirlo en una barrera. */
+    var queVende = f.elements['cla-que-vende'].value.trim();
+    if (queVende.length < 20) {
+      avisar('Cuéntanos un poco más de qué vendes: con eso el equipo clasifica tu ' +
+             'emprendimiento y lo encuentran las oportunidades que te sirven.', true);
+      f.elements['cla-que-vende'].focus();
       return;
     }
     guardar();
@@ -288,17 +223,21 @@ EU.alEstarListo(function () {
         comuna: f.elements['emp-comuna'].value,
         anoInicio: f.elements['emp-ano'].value,
         descripcion: f.elements['emp-descripcion'].value.trim(),
-        instagram: f.elements['emp-instagram'].value.trim()
+        instagram: f.elements['emp-instagram'].value.trim(),
+        web: f.elements['emp-web'].value.trim()
       },
+      /* Solo queVende: el rubro, los subrubros y las etiquetas son del
+         equipo. Si se mandaran igual, el hook del backend los repone
+         desde el original y el viaje sería en vano. */
       clasificacion: {
-        rubro: selRubro.value,
-        subrubros: subrubrosMarcados(),
-        tipos: tiposMarcados(),
-        otroDetalle: f.elements['cla-otro'].value.trim()
+        queVende: f.elements['cla-que-vende'].value.trim()
       },
       productos: {
         personaliza: f.elements['pro-personaliza'].value === 'si',
-        detallePersonaliza: f.elements['pro-detalle'].value.trim()
+        detallePersonaliza: f.elements['pro-detalle'].value.trim(),
+        masVendidos: ['pro-top1', 'pro-top2', 'pro-top3']
+          .map(function (id) { return f.elements[id].value.trim(); })
+          .filter(function (v) { return v; })
       },
       formalizacion: {
         inicioActividades: f.elements['for-inicioActividades'].checked,
@@ -339,6 +278,8 @@ EU.alEstarListo(function () {
           ' <span style="font-size:.9rem;color:var(--tinta-2)">' +
           esc(EU.estados.info('ficha', nueva.estado).descripcion) + '</span>';
         pintarFotos(nueva);
+        pintarLogo(nueva);
+        pintarClasificacion(nueva);
       }
     }).catch(function (err) {
       ocupado(false);
@@ -348,7 +289,7 @@ EU.alEstarListo(function () {
 
   /* ---------- Fotos y documentos ---------- */
 
-  var porSubir = { fotos: [], documentos: [] };
+  var porSubir = { fotos: [], documentos: [], logo: [] };
 
   function subirPendientes(idFicha) {
     var campos = Object.keys(porSubir).filter(function (c) { return porSubir[c].length; });
@@ -363,7 +304,7 @@ EU.alEstarListo(function () {
       body: fd
     }).then(function (r) {
       if (!r.ok) throw new Error('No se pudieron subir los archivos.');
-      porSubir = { fotos: [], documentos: [] };
+      porSubir = { fotos: [], documentos: [], logo: [] };
     });
   }
 
@@ -377,6 +318,28 @@ EU.alEstarListo(function () {
                  esc(f2.emprendimiento.nombre) + '" width="160" height="120" loading="lazy">';
         }).join('')
       : '<p class="pista">Todavía no has subido fotografías.</p>';
+  }
+
+  function pintarLogo(f2) {
+    var zona = document.getElementById('logo-actual');
+    if (!zona) return;
+    var logo = f2 && f2.emprendimiento && f2.emprendimiento.logo;
+    zona.innerHTML = logo
+      ? '<img src="' + esc(logo) + '" alt="Logo de ' +
+        esc(f2.emprendimiento.nombre) + '" width="140" height="140" loading="lazy"' +
+        ' style="object-fit:contain;background:var(--papel-2);border-radius:var(--r)">'
+      : '<p class="pista">Todavía no has subido tu logo.</p>';
+  }
+
+  pintarLogo(ficha);
+
+  var entradaLogo = document.getElementById('subir-logo');
+  if (entradaLogo) {
+    entradaLogo.addEventListener('change', function () {
+      porSubir.logo = Array.prototype.slice.call(entradaLogo.files);
+      document.getElementById('aviso-logo').textContent = porSubir.logo.length
+        ? 'Logo listo para subir al guardar.' : '';
+    });
   }
 
   var entradaFotos = document.getElementById('subir-fotos');

@@ -136,6 +136,16 @@
           </label>
           <input type="text" id="o-imagen-alt" name="imagenAlt" maxlength="200">
         </div>
+        <div class="campo">
+          <label for="o-transferencia">Datos para pagar la participación
+            <span class="pista">Van en el correo que recibe quien queda seleccionado, y
+            solo él los ve. Banco, tipo de cuenta, número, RUT, nombre y correo al que
+            mandar el comprobante. Sin esto el aviso de selección no se manda, porque
+            diría "paga" sin decir dónde.</span>
+          </label>
+          <textarea id="o-transferencia" name="datosTransferencia" maxlength="600"
+                    rows="4" placeholder="Banco Estado, cuenta corriente 123456789&#10;RUT 11.111.111-1, Nombre Apellido&#10;Comprobante a pagos@equipouni.cl"></textarea>
+        </div>
         <div class="campo campo--fila">
           <div>
             <label for="o-pago">Plazo de pago</label>

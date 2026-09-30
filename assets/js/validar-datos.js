@@ -164,15 +164,28 @@ EU.validar = (function () {
       }
       if (f.clasificacion) {
         var rubro = f.clasificacion.rubro;
-        if (rubro !== EU.catalogo.OTRO && !EU.catalogo.rubro(rubro)) {
+        /* Desde el 30-sep el rubro lo asigna el equipo al validar, así que
+           una ficha sin clasificar es lo NORMAL mientras está pendiente:
+           no es un error. Lo que sí es error es que llegue a validada sin
+           rubro, porque entonces no aparece en ningún filtro y la persona
+           quedó habilitada para postular a algo que nunca la va a
+           encontrar. */
+        if (!rubro) {
+          if (f.estado === 'validada') {
+            error(id, 'está validada y sin rubro asignado: no la va a encontrar ' +
+                      'ninguna oportunidad');
+          }
+        } else if (rubro !== EU.catalogo.OTRO && !EU.catalogo.rubro(rubro)) {
           error(id, 'el rubro "' + rubro + '" no existe en el catálogo');
         }
         var subs = EU.catalogo.subrubrosDe(f.clasificacion);
         subs.forEach(function (s) {
           if (!EU.catalogo.subrubro(s)) {
             error(id, 'el subrubro "' + s + '" no existe en el catálogo');
-          } else {
-            /* Un subrubro tiene que pertenecer al rubro principal elegido. */
+          } else if (rubro) {
+            /* Un subrubro tiene que pertenecer al rubro principal elegido.
+               Solo se comprueba si hay rubro: sin rubro no hay a qué
+               pertenecer, y el caso ya lo reporta la revisión de arriba. */
             var pertenece = EU.catalogo.subrubros(rubro).some(function (x) { return x.id === s; });
             if (!pertenece) {
               error(id, 'el subrubro "' + s + '" no pertenece al rubro "' + rubro + '"');
@@ -183,8 +196,11 @@ EU.validar = (function () {
         if (tope && subs.length > tope) {
           error(id, 'tiene ' + subs.length + ' subrubros y el máximo configurado es ' + tope);
         }
-        if (rubro === EU.catalogo.OTRO && !f.clasificacion.otroDetalle) {
-          error(id, 'marcó "Otro" sin detallar qué vende');
+        /* La contraparte del cambio: si el equipo clasifica, el emprendedor
+           tiene que haber contado qué vende. Sin eso el revisor no tiene
+           con qué decidir, y la ficha es imposible de resolver. */
+        if (!f.clasificacion.queVende && f.estado !== 'incompleta') {
+          aviso(id, 'no dice qué vende: el equipo no tiene con qué asignarle rubro');
         }
       }
     });

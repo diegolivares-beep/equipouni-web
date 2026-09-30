@@ -66,9 +66,54 @@ EU.alEstarListo(function () {
           esc(fi.observaciones[s]) + '</p>';
       }).join('');
       var alerta = fi.clasificacion.rubro === EU.catalogo.OTRO
-        ? '<p class="aviso-categoria">Se clasificó como "Otro": hay que decidir a qué ' +
+        ? '<p class="aviso-categoria">Está en "Otro": hay que decidir a qué ' +
           'rubro corresponde o si el catálogo necesita una categoría nueva.</p>'
         : '';
+
+      /* Los dos selectores con los que se clasifica. El de subrubros es
+         múltiple y se repuebla al elegir rubro; el marcado inicial es lo
+         que ya tenga la ficha, para no perderlo al volver a validar. */
+      var opcionesRubro = '<option value="">Elegir rubro…</option>' +
+        EU.catalogo.rubros.map(function (ru) {
+          var sel = ru.id === fi.clasificacion.rubro ? ' selected' : '';
+          return '<option value="' + esc(ru.id) + '"' + sel + '>' + esc(ru.nombre) + '</option>';
+        }).join('');
+
+      var subsActuales = EU.catalogo.subrubrosDe(fi.clasificacion);
+      var opcionesSub = EU.catalogo.subrubros(fi.clasificacion.rubro).map(function (s) {
+        var sel = subsActuales.indexOf(s.id) !== -1 ? ' selected' : '';
+        return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(s.nombre) + '</option>';
+      }).join('');
+
+      var CAJA = 'padding:.55rem .6rem;border:1px solid var(--borde);' +
+                 'border-radius:var(--r);font:inherit';
+
+      var clasificar =
+        '<div class="acciones-lote" style="align-items:flex-start;margin-bottom:.6rem">' +
+          '<div style="min-width:190px">' +
+            '<label style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.2rem">Rubro</label>' +
+            '<select data-rubro="' + esc(fi.id) + '" style="' + CAJA + ';width:100%">' +
+              opcionesRubro +
+            '</select>' +
+          '</div>' +
+          '<div style="min-width:190px">' +
+            '<label style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.2rem">Subrubros' +
+              ' <span class="pista">Ctrl para varios</span></label>' +
+            '<select data-sub="' + esc(fi.id) + '" multiple size="4" style="' + CAJA + ';width:100%">' +
+              opcionesSub +
+            '</select>' +
+          '</div>' +
+          '<div style="flex:1;min-width:200px">' +
+            '<label style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.2rem">Etiquetas' +
+              ' <span class="pista">Separadas por coma</span></label>' +
+            '<input type="text" data-etiq="' + esc(fi.id) + '" style="' + CAJA + ';width:100%"' +
+              ' value="' + esc((fi.etiquetas || []).join(', ')) + '"' +
+              ' placeholder="artesanía, reciclado, vegano">' +
+          '</div>' +
+        '</div>' +
+        '<p class="pista" style="margin:0 0 .8rem">Si ningún rubro calza, agrégalo en ' +
+          '<a href="admin-catalogo.html">Catálogo</a> y vuelve. Para validar hace falta ' +
+          'rubro; las etiquetas y los subrubros son opcionales.</p>';
 
       return '<details class="postulacion">' +
         '<summary>' +
@@ -84,6 +129,8 @@ EU.alEstarListo(function () {
         '<div class="postulacion__detalle" style="max-width:none">' +
           alerta + obs +
           EU.admin.fichaCompleta(fi) +
+          '<hr style="border:0;border-top:1px solid var(--borde);margin:1rem 0 .8rem">' +
+          clasificar +
           '<div class="acciones-lote">' +
             '<button type="button" class="boton" data-validar="' + esc(fi.id) + '">Validar ficha</button>' +
             /* La observación se guarda contra una sección concreta, para
@@ -104,14 +151,56 @@ EU.alEstarListo(function () {
     }).join('');
   }
 
-  document.getElementById('listado').addEventListener('click', function (e) {
+  /* Los subrubros dependen del rubro, así que se repueblan al cambiarlo.
+     Se escucha en el contenedor y no en cada selector, para que valga
+     también para los que se dibujen después de resolver una ficha. */
+  listado.addEventListener('change', function (e) {
+    var sel = e.target;
+    if (!sel.hasAttribute || !sel.hasAttribute('data-rubro')) return;
+    var id = sel.getAttribute('data-rubro');
+    var destino = document.querySelector('[data-sub="' + id + '"]');
+    if (!destino) return;
+    destino.innerHTML = EU.catalogo.subrubros(sel.value).map(function (s) {
+      return '<option value="' + esc(s.id) + '">' + esc(s.nombre) + '</option>';
+    }).join('');
+  });
+
+  /* Lo que el revisor dejó escrito en los tres controles de esa ficha. */
+  function clasificacionDe(id) {
+    var selRubro = document.querySelector('[data-rubro="' + id + '"]');
+    var selSub = document.querySelector('[data-sub="' + id + '"]');
+    var campoEtiq = document.querySelector('[data-etiq="' + id + '"]');
+    return {
+      rubro: selRubro ? selRubro.value : '',
+      subrubros: selSub
+        ? Array.prototype.map.call(selSub.selectedOptions, function (o) { return o.value; })
+        : [],
+      etiquetas: EU.admin.etiquetasDesdeTexto(campoEtiq ? campoEtiq.value : '')
+    };
+  }
+
+  listado.addEventListener('click', function (e) {
     var b = e.target;
     if (b.hasAttribute('data-validar')) {
       var id = b.getAttribute('data-validar');
+      var clas = clasificacionDe(id);
+      /* Validar sin rubro deja a la persona habilitada para postular y
+         fuera de todos los filtros: quedaría esperando algo que nunca la
+         va a encontrar. Por eso el rubro es obligatorio acá y no un
+         "ya lo pongo después". */
+      if (!clas.rubro) {
+        mensaje.className = 'mensaje-form mensaje-form--error';
+        mensaje.textContent = 'Elige el rubro antes de validar: sin rubro la ficha no ' +
+          'aparece en ninguna búsqueda de oportunidad.';
+        var foco = document.querySelector('[data-rubro="' + id + '"]');
+        if (foco) foco.focus();
+        return;
+      }
       b.disabled = true;
-      EU.admin.resolverFicha(id, 'validar').then(function () {
+      EU.admin.resolverFicha(id, 'validar', '', '', clas).then(function () {
         mensaje.className = 'mensaje-form';
-        mensaje.textContent = 'Ficha validada. El aviso al emprendedor se envía aparte, en Comunicaciones.';
+        mensaje.textContent = 'Ficha validada y clasificada. El correo al emprendedor ' +
+          'sale solo; en Comunicaciones se puede cambiar el texto.';
         render();
       }).catch(function (err) {
         b.disabled = false;
@@ -129,10 +218,15 @@ EU.alEstarListo(function () {
       }
       var selector = document.querySelector('[data-seccion="' + id2 + '"]');
       b.disabled = true;
+      /* Al pedir corrección la clasificación se guarda igual si ya la
+         escribió: así no se pierde el trabajo de clasificar cuando la
+         ficha va y vuelve varias veces. */
       EU.admin.resolverFicha(id2, 'corregir', campo.value.trim(),
-                             selector ? selector.value : 'general').then(function () {
+                             selector ? selector.value : 'general',
+                             clasificacionDe(id2)).then(function () {
         mensaje.className = 'mensaje-form';
-        mensaje.textContent = 'Ficha devuelta a corrección con la observación registrada.';
+        mensaje.textContent = 'Ficha devuelta a corrección. El correo con la observación ' +
+          'sale solo.';
         render();
       }).catch(function (err) {
         b.disabled = false;

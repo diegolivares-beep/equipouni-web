@@ -57,6 +57,61 @@ EU.alEstarListo(function () {
   var filtros = { cluster: '', rubro: '', estado: '', respuesta: '' };
   var mensajeLote = '';
 
+  /* AGRUPAR POR: lo pidió el cliente el 30-sep. Distinto de los filtros,
+     que esconden filas: esto las deja todas y las ordena en bloques con su
+     título y su conteo, para poder mirar "los de este rubro" sin perder de
+     vista el resto. Vacío = una sola lista, como antes.
+
+     Las opciones son las que de verdad sirven para armar la lista que va a
+     la productora. "Etiqueta" es el caso raro: una ficha puede tener
+     varias, así que la misma persona aparece en varios grupos. Es lo
+     correcto para etiquetas y por eso se avisa en pantalla. */
+  var agruparPor = '';
+
+  var AGRUPACIONES = {
+    '': 'Sin agrupar',
+    cluster: 'Coincidencia con el perfil',
+    rubro: 'Rubro',
+    estado: 'Estado de la postulación',
+    comuna: 'Comuna',
+    etiqueta: 'Etiqueta',
+    formalizacion: 'Formalización'
+  };
+
+  /* A qué grupos pertenece una fila. Devuelve una lista porque con
+     etiquetas puede ser más de uno. */
+  function gruposDe(x) {
+    var f = x.ficha;
+    if (agruparPor === 'cluster') {
+      return [EU.estados.info('cluster', x.cluster).etiqueta];
+    }
+    if (agruparPor === 'rubro') {
+      return [f.clasificacion.rubro
+        ? EU.catalogo.nombre(f.clasificacion.rubro) : 'Sin clasificar'];
+    }
+    if (agruparPor === 'estado') {
+      return [EU.estados.etiqueta('postulacion', x.postulacion.estado)];
+    }
+    if (agruparPor === 'comuna') {
+      return [EU.territorio.nombreComuna(f.emprendimiento.comuna) || 'Sin comuna'];
+    }
+    if (agruparPor === 'etiqueta') {
+      var et = f.etiquetas || [];
+      return et.length ? et.slice() : ['Sin etiquetas'];
+    }
+    if (agruparPor === 'formalizacion') {
+      var fo = f.formalizacion || {};
+      /* Se agrupa por el papel que más pesa para autorizar un puesto, que
+         es el orden en que lo piden las productoras. */
+      if (fo.resolucionSanitaria) return ['Con resolución sanitaria'];
+      if (fo.inicioActividades) return ['Con inicio de actividades'];
+      if (fo.patente) return ['Con patente'];
+      if (fo.boleta) return ['Emite boleta'];
+      return ['Sin formalización declarada'];
+    }
+    return [''];
+  }
+
   function datos() { return EU.clusters.deOportunidad(o.id); }
 
   function filtrar(lista) {
@@ -79,7 +134,7 @@ EU.alEstarListo(function () {
       porEstado[x.postulacion.estado] = (porEstado[x.postulacion.estado] || 0) + 1;
     });
 
-    var filas = vistas.map(function (x) {
+    function filaDe(x) {
       var p = x.postulacion, f = x.ficha;
       var respuestas = Object.keys(p.respuestas || {}).map(function (rid) {
         var pregunta = null;
@@ -108,7 +163,45 @@ EU.alEstarListo(function () {
         (respuestas ? '<h4 style="margin-top:1rem">Respuestas a esta oportunidad</h4>' +
           '<dl class="datos">' + respuestas + '</dl>' : '') +
       '</td></tr>';
-    }).join('');
+    }
+
+    /* Sin agrupar es una lista sola; agrupando, un encabezado por grupo con
+       su conteo. Los grupos van en orden alfabético salvo los que tienen un
+       orden propio que significa algo (clúster y estado), donde el orden del
+       catálogo de estados es más útil que el abecedario. */
+    var filas;
+    if (!agruparPor) {
+      filas = vistas.map(filaDe).join('');
+    } else {
+      var grupos = {};
+      vistas.forEach(function (x) {
+        gruposDe(x).forEach(function (g) {
+          if (!grupos[g]) grupos[g] = [];
+          grupos[g].push(x);
+        });
+      });
+
+      var orden = Object.keys(grupos);
+      if (agruparPor === 'cluster') {
+        var ordenCluster = Object.keys(EU.estados.clusterInfo).map(function (c) {
+          return EU.estados.clusterInfo[c].etiqueta;
+        });
+        orden.sort(function (a, b) { return ordenCluster.indexOf(a) - ordenCluster.indexOf(b); });
+      } else if (agruparPor === 'estado') {
+        var ordenEstado = Object.keys(EU.estados.postulacionInfo).map(function (s) {
+          return EU.estados.etiqueta('postulacion', s);
+        });
+        orden.sort(function (a, b) { return ordenEstado.indexOf(a) - ordenEstado.indexOf(b); });
+      } else {
+        orden.sort(function (a, b) { return a.localeCompare(b, 'es'); });
+      }
+
+      filas = orden.map(function (g) {
+        return '<tr class="grupo-tabla"><th colspan="5" scope="colgroup">' +
+            esc(g) + ' <span>' + grupos[g].length + '</span></th></tr>' +
+          grupos[g].map(filaDe).join('');
+      }).join('');
+    }
 
     pantalla.innerHTML =
       '<p class="migas"><a href="admin-oportunidades.html">Oportunidades</a> / ' + esc(o.nombre) + '</p>' +
@@ -139,8 +232,18 @@ EU.alEstarListo(function () {
           '<option value="reemplazo-si"' + (filtros.respuesta === 'reemplazo-si' ? ' selected' : '') +
             '>Acepta reemplazo</option>' +
         '</select></label>' +
+        '<label>Agrupar por <select name="agrupar">' +
+          Object.keys(AGRUPACIONES).map(function (k) {
+            return '<option value="' + k + '"' + (agruparPor === k ? ' selected' : '') + '>' +
+              esc(AGRUPACIONES[k]) + '</option>';
+          }).join('') + '</select></label>' +
         '<span class="resumen-filtros">' + vistas.length + ' de ' + todas.length + '</span>' +
       '</form>' +
+      (agruparPor === 'etiqueta'
+        ? '<p class="aviso-categoria">Un emprendimiento puede tener varias etiquetas, así ' +
+          'que aparece en un grupo por cada una. Los totales de los grupos suman más que ' +
+          'los postulantes.</p>'
+        : '') +
 
       '<div class="acciones-lote">' +
         '<strong style="font-size:.85rem">Con las filas marcadas:</strong>' +
@@ -173,7 +276,8 @@ EU.alEstarListo(function () {
 
     /* Filtros */
     document.getElementById('filtros').addEventListener('change', function (e) {
-      filtros[e.target.name] = e.target.value;
+      if (e.target.name === 'agrupar') agruparPor = e.target.value;
+      else filtros[e.target.name] = e.target.value;
       mensajeLote = '';
       render();
     });

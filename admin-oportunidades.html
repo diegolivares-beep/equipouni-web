@@ -77,9 +77,43 @@ EU.alEstarListo(function () {
       '<td class="num">' + o.cuposDisponibles + ' de ' + o.cupos + '</td>' +
       '<td class="num">' + posts.length + '</td>' +
       '<td><a href="admin-postulantes.html?id=' + encodeURIComponent(o.id) + '">Postulantes</a><br>' +
-        '<a href="admin-oportunidad.html?id=' + encodeURIComponent(o.id) + '">Editar</a></td>' +
+        '<a href="admin-oportunidad.html?id=' + encodeURIComponent(o.id) + '">Editar</a><br>' +
+        '<button type="button" class="enlace-boton" data-enlace="' + esc(o.id) + '">Copiar enlace</button></td>' +
     '</tr>';
   }).join('');
+
+  /* COPIAR ENLACE: existe sobre todo por las ocultas.
+     "Oculta" significa que no se lista en el tablero, no que esté
+     apagada: la página sigue respondiendo y quien tenga el enlace puede
+     postular. El cliente la usa así a propósito, para repartirla por
+     WhatsApp a quien él quiera. Hasta ahora no había forma de obtener ese
+     enlace desde el panel y había que armarlo a mano. */
+  document.getElementById('filas').addEventListener('click', function (e) {
+    var b = e.target;
+    if (!b.hasAttribute || !b.hasAttribute('data-enlace')) return;
+    var url = location.origin + location.pathname.replace(/[^/]*$/, '') +
+      'oportunidad.html?id=' + encodeURIComponent(b.getAttribute('data-enlace'));
+    var texto = b.textContent;
+
+    function listo(ok) {
+      b.textContent = ok ? 'Enlace copiado' : url;
+      if (!ok) {
+        /* Sin portapapeles (http, o permiso denegado) se muestra el enlace
+           para que se pueda copiar a mano, en vez de fallar en silencio. */
+        b.style.userSelect = 'all';
+        b.style.wordBreak = 'break-all';
+        return;
+      }
+      setTimeout(function () { b.textContent = texto; }, 1800);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { listo(true); },
+                                            function () { listo(false); });
+    } else {
+      listo(false);
+    }
+  });
 });
 </script>
 </body>

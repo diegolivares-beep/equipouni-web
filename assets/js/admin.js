@@ -21,6 +21,7 @@ EU.admin = {
     { archivo: 'admin-oportunidades.html',  texto: 'Oportunidades' },
     { archivo: 'admin-validaciones.html',   texto: 'Validaciones' },
     { archivo: 'admin-emprendedores.html',  texto: 'Emprendedores' },
+    { archivo: 'admin-catalogo.html',        texto: 'Catálogo' },
     { archivo: 'admin-comunicaciones.html', texto: 'Comunicaciones' }
   ],
 
@@ -92,19 +93,50 @@ EU.admin = {
     ['formalizacion', 'Formalización']
   ],
 
-  /* Cambia el estado de una ficha (validar o pedir corrección). */
-  resolverFicha: function (idFicha, decision, observacion, seccion) {
+  /* Cambia el estado de una ficha (validar o pedir corrección).
+
+     Desde el 30-sep la clasificación viaja por acá, y no por el
+     formulario del emprendedor: rubro, subrubros y etiquetas los pone
+     quien valida. El backend además los repone si llegan por cualquier
+     otro camino, así que este es el único lugar del sitio que los
+     escribe.
+
+     "clasificacion" es opcional para no romper a quien llame sin ella
+     (pedir corrección, por ejemplo, no necesita clasificar). */
+  resolverFicha: function (idFicha, decision, observacion, seccion, clasificacion) {
     var obs = {};
     obs[seccion || 'general'] = observacion || 'Revisar antecedentes.';
     var cuerpo = decision === 'validar'
       ? { estado: 'validada', observaciones: {} }
       : { estado: 'correccion', observaciones: obs };
+
+    if (clasificacion) {
+      if (clasificacion.rubro !== undefined) cuerpo.cla_rubro = clasificacion.rubro;
+      if (clasificacion.subrubros !== undefined) cuerpo.cla_subrubros = clasificacion.subrubros;
+      if (clasificacion.etiquetas !== undefined) cuerpo.etiquetas = clasificacion.etiquetas;
+    }
+
     return EU.api.actualizar('fichas', idFicha, cuerpo).then(function (r) {
       var f = EU.datos.emprendedor(idFicha);
       var nueva = EU.modelo.fichaDesdeBase(r);
-      if (f) { f.estado = nueva.estado; f.observaciones = nueva.observaciones; }
+      /* Se copia el registro completo y no tres campos: antes se copiaban
+         estado y observaciones, y la clasificación recién guardada no se
+         veía hasta recargar la página. */
+      if (f) { for (var k in nueva) f[k] = nueva[k]; }
       return nueva;
     });
+  },
+
+  /* Las etiquetas se escriben como se escriben los hashtags: separadas
+     por coma o por espacio, y el orden y las repeticiones se limpian acá
+     para que el dato guardado sea siempre el mismo. */
+  etiquetasDesdeTexto: function (texto) {
+    return String(texto || '')
+      .split(/[,\n]+/)
+      .map(function (t) { return t.trim().replace(/^#/, ''); })
+      .filter(function (t) { return t; })
+      .filter(function (t, i, lista) { return lista.indexOf(t) === i; })
+      .slice(0, 12);
   },
 
   /* ---------- Piezas de interfaz ---------- */
@@ -120,14 +152,15 @@ EU.admin = {
      Si el rubro no está en el catálogo, EU.catalogo.nombre devuelve el
      identificador crudo, y antes eso se imprimía como si fuera un nombre:
      el revisor leía "alimentos" en minúscula y no tenía cómo saber que esa
-     ficha apunta a una categoría que ya no existe. Va a pasar de verdad en
-     cuanto el cliente ajuste el catálogo, porque las fichas viejas se quedan
-     con los identificadores viejos. Por eso se dice. */
+     ficha apunta a una categoría que ya no existe. Con el catálogo en la
+     base el caso casi desaparece, pero sigue siendo posible si alguien
+     borra un rubro que fichas viejas todavía usan. Por eso se dice. */
   clasificacionCorta: function (ficha) {
     var c = ficha.clasificacion;
+    if (!c.rubro) return 'Sin clasificar';
     if (c.rubro === EU.catalogo.OTRO) return 'Otro: ' + (c.otroDetalle || 'sin detalle');
     var t = EU.catalogo.nombre(c.rubro);
-    if (c.rubro && !EU.catalogo.rubro(c.rubro)) {
+    if (!EU.catalogo.rubro(c.rubro)) {
       t = c.rubro + ' (rubro fuera del catálogo)';
     }
     var subs = EU.catalogo.nombresSubrubros(c);
@@ -169,19 +202,48 @@ EU.admin = {
           ? ': ' + esc(ficha.productos.detallePersonaliza) : '')
       : 'No';
 
-    return '<dl class="datos" style="border-top:0;padding-top:0;margin-top:.4rem">' +
+    var top = (ficha.productos.masVendidos || []);
+    var etiquetas = (ficha.etiquetas || []);
+
+    /* El logo va junto al nombre y no entre las fotos: es lo que la
+       productora pide para su difusión, y conviene ver de una si existe. */
+    var logo = em.logo
+      ? '<img src="' + esc(em.logo) + '" alt="Logo de ' + esc(em.nombre) +
+        '" width="72" height="72" loading="lazy" style="object-fit:contain;' +
+        'background:var(--papel-2);border-radius:var(--r);float:right;margin:0 0 .5rem .7rem">'
+      : '';
+
+    var redes = [];
+    if (em.instagram) redes.push('<a href="' + esc(em.instagram) +
+      '" target="_blank" rel="noopener noreferrer">Instagram</a>');
+    if (em.web) redes.push('<a href="' + esc(em.web) +
+      '" target="_blank" rel="noopener noreferrer">Otra red o web</a>');
+
+    return logo +
+      '<dl class="datos" style="border-top:0;padding-top:0;margin-top:.4rem">' +
       '<div><dt>Representante</dt><dd>' + esc(r.nombre) + '<br>' + esc(r.rut) + '</dd></div>' +
       '<div><dt>Contacto</dt><dd>' + esc(r.correo) + '<br>' + esc(r.telefono) + '</dd></div>' +
       '<div><dt>Comuna</dt><dd>' + esc(EU.territorio.nombreComuna(em.comuna)) + '</dd></div>' +
       '<div><dt>Desde</dt><dd>' + em.anoInicio + '</dd></div>' +
       '<div><dt>Clasificación</dt><dd>' + esc(EU.admin.clasificacionCorta(ficha)) + '</dd></div>' +
+      '<div><dt>Etiquetas</dt><dd>' +
+        (etiquetas.length ? esc(etiquetas.join(' · ')) : 'Ninguna') + '</dd></div>' +
+      '<div><dt>Más vendidos</dt><dd>' +
+        (top.length ? esc(top.join(' · ')) : 'No los declaró') + '</dd></div>' +
       '<div><dt>Personaliza</dt><dd>' + personaliza + '</dd></div>' +
       '<div><dt>Declara tener</dt><dd>' + (docs.length ? esc(docs.join(', ')) : 'Ninguno') + '</dd></div>' +
       '<div><dt>Archivos que subió</dt><dd>' + adjuntos + '</dd></div>' +
       '</dl>' +
+      /* Lo que él escribió sobre qué vende va destacado, porque es el
+         texto con el que se decide el rubro: es lo primero que tiene que
+         leer quien valida. */
+      (ficha.clasificacion.queVende
+        ? '<p class="aviso-categoria" style="margin:.7rem 0 .4rem"><strong>Qué vende, ' +
+          'en sus palabras:</strong> ' + esc(ficha.clasificacion.queVende) + '</p>'
+        : '<p class="aviso-categoria" style="margin:.7rem 0 .4rem">No escribió qué vende: ' +
+          'sin eso no hay con qué clasificarlo, conviene pedírselo.</p>') +
       '<p style="margin:.7rem 0 .4rem;font-size:.92rem">' + esc(em.descripcion) + '</p>' +
-      (em.instagram ? '<p style="font-size:.85rem"><a href="' + esc(em.instagram) +
-        '" target="_blank" rel="noopener noreferrer">Ver redes del emprendimiento</a></p>' : '') +
+      (redes.length ? '<p style="font-size:.85rem">' + redes.join(' · ') + '</p>' : '') +
       '<div class="fotos-ficha">' + fotos + '</div>';
   },
 

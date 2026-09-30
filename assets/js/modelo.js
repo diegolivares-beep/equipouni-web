@@ -43,6 +43,10 @@ EU.modelo = {
 
       cierrePostulacion: r.cierre_postulacion,
       plazoPago: r.plazo_pago,
+      /* Texto libre con la cuenta a la que se paga la participacion. Viaja
+         al correo de seleccion (hook avisos.pb.js) y solo lo ve el
+         seleccionado: no se muestra en el detalle publico. */
+      datosTransferencia: r.datos_transferencia || '',
       asistencia: r.asistencia,
       cancelacion: r.cancelacion,
 
@@ -82,7 +86,8 @@ EU.modelo = {
       valor: o.valor,
       que_incluye: o.queIncluye || [], que_no_incluye: o.queNoIncluye || [],
       cierre_postulacion: o.cierrePostulacion,
-      plazo_pago: o.plazoPago || '', asistencia: o.asistencia || '',
+      plazo_pago: o.plazoPago || '',
+      datos_transferencia: o.datosTransferencia || '', asistencia: o.asistencia || '',
       cancelacion: o.cancelacion || '',
       rubros_buscados: o.rubrosBuscados || [],
       subrubros_buscados: o.subrubrosBuscados || [],
@@ -123,18 +128,27 @@ EU.modelo = {
         anoInicio: r.emp_ano_inicio || '',
         descripcion: r.emp_descripcion || '',
         instagram: r.emp_instagram || '',
-        web: ''
+        web: r.emp_web || '',
+        logo: r.logo ? EU.api.archivo(r, r.logo, '300x0') : ''
       },
       clasificacion: {
         rubro: r.cla_rubro || '',
         subrubros: r.cla_subrubros || [],
         tipos: r.cla_tipos || [],
-        otroDetalle: r.cla_otro_detalle || ''
+        otroDetalle: r.cla_otro_detalle || '',
+        /* Lo que el emprendedor escribió en sus palabras. Es la materia
+           prima con la que el equipo le asigna rubro al validar, así que
+           viaja junto a la clasificación y no junto a los productos. */
+        queVende: r.cla_que_vende || ''
       },
+      /* Las pone el revisor, como se ponen los hashtags: lista libre, no
+         un catálogo cerrado. */
+      etiquetas: r.etiquetas || [],
       productos: {
         fotos: fotos,
         personaliza: !!r.personaliza,
-        detallePersonaliza: r.personaliza_detalle || ''
+        detallePersonaliza: r.personaliza_detalle || '',
+        masVendidos: r.productos_top || []
       },
       formalizacion: {
         inicioActividades: !!r.for_inicio_actividades,
@@ -151,8 +165,12 @@ EU.modelo = {
     };
   },
 
-  /* Devuelve solo los campos editables: el estado y las observaciones
-     los maneja el backend, mandarlos sería inútil. */
+  /* Devuelve solo los campos que edita el EMPRENDEDOR. El estado, las
+     observaciones y —desde el 30-sep— la clasificación y las etiquetas
+     los maneja el equipo: mandarlos sería inútil, porque el hook de
+     seguridad los repone desde el original. Por eso cla_rubro,
+     cla_subrubros, cla_tipos y etiquetas NO están en esta lista. La
+     clasificación se guarda por el otro camino, EU.admin.resolverFicha. */
   fichaHaciaBase: function (f) {
     return {
       representante_nombre: f.representante.nombre,
@@ -166,12 +184,11 @@ EU.modelo = {
       emp_ano_inicio: Number(f.emprendimiento.anoInicio) || null,
       emp_descripcion: f.emprendimiento.descripcion,
       emp_instagram: f.emprendimiento.instagram || '',
+      emp_web: f.emprendimiento.web || '',
 
-      cla_rubro: f.clasificacion.rubro,
-      cla_subrubros: f.clasificacion.subrubros || [],
-      cla_tipos: f.clasificacion.tipos || [],
-      cla_otro_detalle: f.clasificacion.otroDetalle || '',
+      cla_que_vende: f.clasificacion.queVende || '',
 
+      productos_top: f.productos.masVendidos || [],
       personaliza: !!f.productos.personaliza,
       personaliza_detalle: f.productos.detallePersonaliza || '',
 

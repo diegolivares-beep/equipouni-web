@@ -522,6 +522,10 @@ legend .estado { margin-left: .5rem; vertical-align: middle; }
     padding-right: 1rem;
   }
   .fila-detalle > td { position: static; }
+  /* La fila de detalle y el encabezado de grupo ocupan el ancho completo
+     con colspan: fijarlas a la izquierda las despegaría de su propia
+     tabla al desplazarse. */
+  .grupo-tabla > th { position: static; }
 }
 .tabla th {
   text-align: left; font-size: .66rem; letter-spacing: .11em;
@@ -645,6 +649,21 @@ code {
   white-space: pre-wrap; overflow-x: auto; max-width: 640px;
 }
 
+/* ---------- Encabezado de grupo dentro de una tabla ----------
+   Lo usa "Agrupar por" en los postulantes. Es una fila de la misma tabla y
+   no una tabla por grupo, para que las casillas de selección y las acciones
+   por lote sigan valiendo para todas las filas de una sola pasada. */
+
+.grupo-tabla th {
+  text-align: left; background: var(--papel-2);
+  font-size: .85rem; font-weight: 700; color: var(--tinta);
+  padding: .5rem .7rem; border-top: 2px solid var(--marca);
+}
+.grupo-tabla th span {
+  font-weight: 400; color: var(--tinta-2);
+}
+.grupo-tabla th span::before { content: '· '; }
+
 /* ---------- Hoja imprimible de postulantes (exportar a PDF) ----------
    En pantalla no se ve nunca. Al imprimir, se oculta todo el panel y
    queda solo la hoja, con formato de documento. */
@@ -655,7 +674,9 @@ code {
   body.imprimiendo > *:not(#hoja-impresion) { display: none !important; }
   body.imprimiendo #hoja-impresion { display: block; }
   body.imprimiendo { background: #fff; }
-  @page { size: A4; margin: 14mm 12mm; }
+  /* Apaisado desde que la lista es una tabla de siete columnas: en
+     vertical las respuestas quedaban en una columna de dos centímetros. */
+  @page { size: A4 landscape; margin: 10mm 10mm; }
 }
 
 .hoja { color: var(--tinta); font-size: 10.5pt; }
@@ -709,6 +730,41 @@ code {
   width: 33%; color: var(--tinta-2); padding-right: 10px;
   font-size: 8.5pt; text-transform: uppercase; letter-spacing: .04em;
 }
+
+/* ---------- La lista condensada: una fila por postulante ----------
+   Reemplaza a las fichas extendidas (.ficha-pdf, que se conserva porque la
+   usa el detalle de una sola postulación). Las filas no se parten entre
+   páginas, y la cabecera se repite arriba de cada página: con treinta
+   postulantes, la segunda hoja sin títulos de columna es ilegible. */
+
+.lista-pdf {
+  width: 100%; border-collapse: collapse; font-size: 8.5pt;
+  table-layout: fixed;
+}
+.lista-pdf thead { display: table-header-group; }
+.lista-pdf th {
+  text-align: left; font-size: 7.5pt; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--tinta-2);
+  border-bottom: 1.5px solid var(--marca); padding: 0 6px 4px 0;
+}
+.lista-pdf td {
+  vertical-align: top; padding: 5px 6px 5px 0;
+  border-bottom: 1px solid var(--arena-2);
+  overflow-wrap: break-word; word-break: break-word;
+}
+.lista-pdf tr { break-inside: avoid; page-break-inside: avoid; }
+.lista-pdf th:nth-child(1), .lista-pdf td:nth-child(1) { width: 3%; }
+.lista-pdf th:nth-child(2), .lista-pdf td:nth-child(2) { width: 16%; }
+.lista-pdf th:nth-child(3), .lista-pdf td:nth-child(3) { width: 17%; }
+.lista-pdf th:nth-child(4), .lista-pdf td:nth-child(4) { width: 15%; }
+.lista-pdf th:nth-child(5), .lista-pdf td:nth-child(5) { width: 15%; }
+.lista-pdf th:nth-child(6), .lista-pdf td:nth-child(6) { width: 10%; }
+.lista-pdf th:nth-child(7), .lista-pdf td:nth-child(7) { width: 24%; }
+.lista-pdf .num-pdf { color: var(--tinta-2); font-weight: 700; }
+.lista-pdf .sub-pdf {
+  display: block; font-size: 7.5pt; color: var(--tinta-2); line-height: 1.3;
+}
+.lista-pdf .vacio-pdf { color: var(--tinta-2); font-style: italic; }
 
 .pie-pdf {
   margin-top: 14px; padding-top: 7px; border-top: 1px solid var(--borde);

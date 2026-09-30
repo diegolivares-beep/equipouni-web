@@ -20,17 +20,40 @@
 <main id="contenido" class="bloque">
   <div class="envoltura">
     <h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">Comunicaciones</h1>
-    <p class="angosto">Los correos salen por lote y según el estado de cada postulación.
-    Cambiar estados y enviar correos son acciones separadas a propósito: primero se
-    revisa el lote completo, después se envía.</p>
+    <p class="angosto">Hay dos cosas acá. Arriba, los tres correos que la plataforma manda
+    sola y los textos con los que los manda. Abajo, los envíos por lote, que se revisan
+    completos antes de salir.</p>
 
-    <div class="acciones-lote" style="margin-top:1.4rem">
-      <label>Oportunidad
-        <select id="sel-oportunidad"><option value="">Elige una</option></select>
-      </label>
-    </div>
+    <section class="control-seccion" style="margin-top:1.4rem">
+      <h2 style="font-size:1.3rem">Los tres correos automáticos</h2>
+      <p class="angosto">Salen solos, sin que nadie apriete nada: cuando validas una ficha,
+      cuando la devuelves con observaciones, y cuando marcas a alguien como seleccionado.
+      Puedes cambiar los textos cuando quieras y el cambio vale desde el siguiente envío.</p>
+      <p class="angosto pista">Lo que va entre llaves se reemplaza al enviar. Disponibles:
+      <code>{nombre}</code> de la persona, <code>{emprendimiento}</code>,
+      <code>{rubro}</code>, <code>{observaciones}</code>, <code>{oportunidad}</code>,
+      <code>{transferencia}</code> y <code>{sitio}</code>. Si escribes una llave que no
+      está en esa lista, se manda tal cual y queda fea en el correo.</p>
+      <p class="angosto pista">El aviso de selección lleva los datos de transferencia de
+      esa oportunidad. Si una oportunidad no los tiene cargados, ese correo no se manda:
+      diría "paga" sin decir dónde.</p>
+      <p id="mensaje-plantillas" class="mensaje-form" role="status" aria-live="polite"></p>
+      <div id="plantillas"></div>
+    </section>
 
-    <div id="lotes"></div>
+    <section class="control-seccion">
+      <h2 style="font-size:1.3rem">Envíos por lote</h2>
+      <p class="angosto">Cambiar estados y enviar correos son acciones separadas a
+      propósito: primero se revisa el lote completo, después se envía.</p>
+
+      <div class="acciones-lote" style="margin-top:1.4rem">
+        <label>Oportunidad
+          <select id="sel-oportunidad"><option value="">Elige una</option></select>
+        </label>
+      </div>
+
+      <div id="lotes"></div>
+    </section>
   </div>
 </main>
 
@@ -130,9 +153,121 @@ EU.alEstarListo(function () {
   document.getElementById('lotes').addEventListener('click', function (e) {
     if (!e.target.hasAttribute('data-enviar')) return;
     document.getElementById('mensaje').textContent =
-      'Lote revisado y listo. En la versión final, acá saldrían los correos y quedaría ' +
-      'registrada la fecha de envío de cada uno.';
+      'Lote revisado y listo para copiar. El envío por lote todavía se hace a mano: los ' +
+      'que sí salen solos son los tres de arriba.';
   });
+
+  /* ---------- Los textos de los tres correos automáticos ----------
+     Viven en la colección plantillas_correo y no en el código, porque el
+     cliente pidió poder cambiarlos sin depender de un despliegue. El hook
+     avisos.pb.js es el que los lee al momento de enviar. */
+
+  var NOMBRES = {
+    ficha_validada: ['Ficha validada',
+      'Sale cuando validas una ficha. Es el que la persona está esperando.'],
+    ficha_correccion: ['Ficha con observaciones',
+      'Sale cuando la devuelves a corrección, con la observación que escribiste.'],
+    seleccionado: ['Postulante seleccionado',
+      'Sale cuando marcas a alguien como seleccionado. Lleva los datos para pagar.']
+  };
+
+  var zonaPl = document.getElementById('plantillas');
+  var msgPl = document.getElementById('mensaje-plantillas');
+
+  function avisarPl(texto, esError) {
+    msgPl.textContent = texto;
+    msgPl.className = 'mensaje-form' + (esError ? ' mensaje-form--error' : '');
+  }
+
+  var CAJA = 'width:100%;padding:.55rem .6rem;border:1px solid var(--borde);' +
+             'border-radius:var(--r);font:inherit';
+
+  function pintarPlantillas(lista) {
+    /* Se recorre el orden de NOMBRES y no el de la base, para que las tres
+       salgan siempre en el mismo orden y en el del proceso. */
+    zonaPl.innerHTML = Object.keys(NOMBRES).map(function (clave) {
+      var p = lista.filter(function (x) { return x.clave === clave; })[0];
+      if (!p) {
+        return '<p class="aviso-categoria">Falta la plantilla "' + esc(clave) +
+          '" en la base: ese correo no se va a enviar.</p>';
+      }
+      var info = NOMBRES[clave];
+      return '<details class="postulacion">' +
+        '<summary><span class="postulacion__resumen">' +
+          '<strong>' + esc(info[0]) + '</strong><small>' + esc(info[1]) + '</small>' +
+        '</span>' +
+        '<span class="estado estado--' + (p.activa ? 'abierta' : 'cerrada') + '">' +
+          (p.activa ? 'Activo' : 'Apagado') + '</span></summary>' +
+        '<div class="postulacion__detalle" style="max-width:none">' +
+          '<div class="campo"><label for="a-' + esc(clave) + '">Asunto</label>' +
+            '<input type="text" id="a-' + esc(clave) + '" data-asunto="' + esc(clave) +
+            '" maxlength="200" style="' + CAJA + '" value="' + esc(p.asunto) + '"></div>' +
+          '<div class="campo"><label for="c-' + esc(clave) + '">Texto del correo</label>' +
+            '<textarea id="c-' + esc(clave) + '" data-cuerpo="' + esc(clave) +
+            '" rows="12" maxlength="4000" style="' + CAJA + '">' + esc(p.cuerpo) +
+            '</textarea></div>' +
+          '<p class="acciones">' +
+            '<button type="button" class="boton" data-guardar="' + esc(p.id) + '"' +
+              ' data-clave="' + esc(clave) + '">Guardar texto</button>' +
+            '<button type="button" class="boton boton--linea" data-apagar="' + esc(p.id) + '">' +
+              (p.activa ? 'Dejar de enviarlo' : 'Volver a enviarlo') + '</button>' +
+          '</p>' +
+        '</div>' +
+      '</details>';
+    }).join('');
+  }
+
+  function traerPlantillas() {
+    return EU.api.listar('plantillas_correo', { orden: 'clave' })
+      .then(function (items) { pintarPlantillas(items); return items; })
+      .catch(function (err) {
+        avisarPl(err.message || 'No se pudieron traer los textos.', true);
+        return [];
+      });
+  }
+
+  zonaPl.addEventListener('click', function (e) {
+    var b = e.target;
+    if (b.hasAttribute && b.hasAttribute('data-guardar')) {
+      var id = b.getAttribute('data-guardar');
+      var clave = b.getAttribute('data-clave');
+      var asunto = document.querySelector('[data-asunto="' + clave + '"]').value.trim();
+      var cuerpo = document.querySelector('[data-cuerpo="' + clave + '"]').value.trim();
+      if (!asunto || !cuerpo) {
+        avisarPl('El asunto y el texto no pueden quedar vacíos.', true);
+        return;
+      }
+      b.disabled = true;
+      EU.api.actualizar('plantillas_correo', id, { asunto: asunto, cuerpo: cuerpo })
+        .then(function () {
+          b.disabled = false;
+          avisarPl('Texto guardado. Vale desde el próximo envío.');
+        })
+        .catch(function (err) {
+          b.disabled = false;
+          avisarPl(err.message || 'No se pudo guardar.', true);
+        });
+    } else if (b.hasAttribute && b.hasAttribute('data-apagar')) {
+      var id2 = b.getAttribute('data-apagar');
+      b.disabled = true;
+      /* Se lee el estado de la etiqueta y no de una variable, porque la
+         lista se redibuja completa después de cada cambio. */
+      var apagando = b.textContent.indexOf('Dejar de') === 0;
+      EU.api.actualizar('plantillas_correo', id2, { activa: !apagando })
+        .then(traerPlantillas)
+        .then(function () {
+          avisarPl(apagando
+            ? 'Apagado: ese aviso deja de salir hasta que lo vuelvas a encender.'
+            : 'Encendido: ese aviso vuelve a salir solo.');
+        })
+        .catch(function (err) {
+          b.disabled = false;
+          avisarPl(err.message || 'No se pudo cambiar.', true);
+        });
+    }
+  });
+
+  traerPlantillas();
 });
 </script>
 </body>

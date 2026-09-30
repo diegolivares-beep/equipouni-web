@@ -35,56 +35,73 @@ EU.exportar = {
       ? EU.estados.etiqueta('postulacion', soloUno[0]) + 's'
       : 'Postulantes';
 
-    var fichas = filas.map(function (x, i) {
+    /* UNA LÍNEA POR POSTULANTE, no una ficha por postulante.
+       Lo pidió el cliente el 30-sep, textual: "ojalá cada semificha que se
+       va a enviar esté lo más condensada en espacio posible". Con la ficha
+       extendida, veinte postulantes eran veinte páginas y comparar
+       obligaba a ir y volver. Los campos y su orden son los que él
+       enumeró: nombre, emprendimiento, contacto, correo, rubro, los 3
+       productos, sus respuestas y las etiquetas. */
+    var cuerpo = filas.map(function (x, i) {
       var p = x.postulacion, f = x.ficha;
       if (!f) return '';
-
-      var docs = [];
-      if (f.formalizacion.inicioActividades) docs.push('Inicio de actividades');
-      if (f.formalizacion.boleta) docs.push('Emite boleta');
-      if (f.formalizacion.patente) docs.push('Patente comercial');
-      if (f.formalizacion.resolucionSanitaria) docs.push('Resolución sanitaria');
-      if (f.formalizacion.personalidadJuridica) docs.push('Personalidad jurídica');
 
       var respuestas = Object.keys(p.respuestas || {}).map(function (rid) {
         var q = null;
         (oportunidad.preguntas || []).forEach(function (y) { if (y.id === rid) q = y; });
         var v = p.respuestas[rid];
         if (Array.isArray(v)) v = v.join(', ');
-        return '<tr><td class="pregunta">' + esc(q ? q.texto : rid) + '</td><td>' + esc(v) + '</td></tr>';
-      }).join('');
+        return (q ? q.texto : rid) + ': ' + v;
+      }).join(' · ');
 
-      return '' +
-        '<article class="ficha-pdf">' +
-          '<header>' +
-            '<span class="numero">' + (i + 1) + '</span>' +
-            '<div>' +
-              '<h2>' + esc(f.emprendimiento.nombre) + '</h2>' +
-              '<p class="clasif">' + esc(EU.admin.clasificacionCorta(f)) + ' · ' +
-                esc(EU.territorio.nombreComuna(f.emprendimiento.comuna)) + '</p>' +
-            '</div>' +
-            '<span class="estado-pdf">' + esc(EU.estados.etiqueta('postulacion', p.estado)) + '</span>' +
-          '</header>' +
-          '<table class="datos-pdf">' +
-            /* El RUT NO va acá. Es dato personal, la productora no lo
-               necesita para decidir a quién dar un puesto, y al postular
-               se le dijo al emprendedor que no se comparte. Si algún día
-               hace falta (una factura, un seguro), se pide aparte y con
-               su consentimiento, no de rutina para todos. */
-            '<tr><td class="pregunta">Representante</td><td>' + esc(f.representante.nombre) + '</td></tr>' +
-            '<tr><td class="pregunta">Contacto</td><td>' + esc(f.representante.correo) +
-              ' · ' + esc(f.representante.telefono) + '</td></tr>' +
-            '<tr><td class="pregunta">Qué vende</td><td>' + esc(f.emprendimiento.descripcion) + '</td></tr>' +
-            (f.emprendimiento.instagram
-              ? '<tr><td class="pregunta">Redes</td><td>' + esc(f.emprendimiento.instagram) + '</td></tr>' : '') +
-            '<tr><td class="pregunta">Documentos</td><td>' +
-              (docs.length ? esc(docs.join(' · ')) : 'Ninguno declarado') + '</td></tr>' +
-            '<tr><td class="pregunta">Coincidencia</td><td>' +
-              esc(EU.estados.info('cluster', x.cluster).etiqueta) + ': ' + esc(x.razon) + '</td></tr>' +
-            respuestas +
-          '</table>' +
-        '</article>';
+      var top = (f.productos.masVendidos || []);
+      var etiquetas = (f.etiquetas || []);
+
+      var redes = [f.emprendimiento.instagram, f.emprendimiento.web]
+        .filter(function (u) { return u; }).join(' · ');
+
+      /* La formalización no está en la lista de campos que pidió el
+         cliente, pero SÍ viajaba en la hoja anterior, y es justo el dato
+         por el que él quiere poder priorizar. Sacarla al condensar habría
+         sido una pérdida que nadie pidió: va abreviada, bajo el rubro. */
+      var formal = [];
+      if (f.formalizacion.inicioActividades) formal.push('inicio act.');
+      if (f.formalizacion.boleta) formal.push('boleta');
+      if (f.formalizacion.patente) formal.push('patente');
+      if (f.formalizacion.resolucionSanitaria) formal.push('res. sanitaria');
+      if (f.formalizacion.personalidadJuridica) formal.push('pers. jurídica');
+
+      /* El RUT NO va acá, igual que antes. Es dato personal, la productora
+         no lo necesita para decidir a quién dar un puesto, y al postular se
+         le dijo al emprendedor que no se comparte. Si algún día hace falta
+         (una factura, un seguro), se pide aparte y con su consentimiento,
+         no de rutina para todos. */
+      return '<tr>' +
+        '<td class="num-pdf">' + (i + 1) + '</td>' +
+        '<td><strong>' + esc(f.emprendimiento.nombre) + '</strong>' +
+          '<span class="sub-pdf">' + esc(f.representante.nombre) + ' · ' +
+          esc(EU.territorio.nombreComuna(f.emprendimiento.comuna)) + '</span></td>' +
+        '<td>' + esc(f.representante.telefono) +
+          '<span class="sub-pdf">' + esc(f.representante.correo) + '</span>' +
+          (redes ? '<span class="sub-pdf">' + esc(redes) + '</span>' : '') + '</td>' +
+        '<td>' + esc(EU.admin.clasificacionCorta(f)) +
+          '<span class="sub-pdf">' +
+          (formal.length ? esc(formal.join(', ')) : 'sin formalización declarada') +
+          '</span></td>' +
+        '<td>' + (top.length ? esc(top.join(', ')) : '<span class="vacio-pdf">no los declaró</span>') + '</td>' +
+        '<td>' + (etiquetas.length ? esc(etiquetas.join(', ')) : '') + '</td>' +
+        '<td>' + (respuestas ? esc(respuestas) : '<span class="vacio-pdf">sin respuestas</span>') + '</td>' +
+      '</tr>';
     }).join('');
+
+    var tabla =
+      '<table class="lista-pdf">' +
+        '<thead><tr>' +
+          '<th></th><th>Emprendimiento</th><th>Contacto</th><th>Rubro</th>' +
+          '<th>Más vendidos</th><th>Etiquetas</th><th>Respuestas</th>' +
+        '</tr></thead>' +
+        '<tbody>' + cuerpo + '</tbody>' +
+      '</table>';
 
     return '' +
       '<div class="hoja">' +
@@ -103,7 +120,7 @@ EU.exportar = {
           'Organiza ' + esc(oportunidad.organizacion) + '</p>' +
         '<p class="conteo-pdf">' + filas.length +
           (filas.length === 1 ? ' emprendimiento' : ' emprendimientos') + ' en esta lista</p>' +
-        fichas +
+        tabla +
         /* La productora recibe datos de contacto de terceros: tiene que
            saber para qué puede usarlos. Decirlo en el documento es lo
            que permite sostener después que se informó. */
