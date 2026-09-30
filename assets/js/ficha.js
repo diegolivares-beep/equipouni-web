@@ -149,8 +149,14 @@ EU.alEstarListo(function () {
       return;
     }
 
-    var nombreRubro = EU.catalogo.nombre(c.rubro);
-    var subs = EU.catalogo.nombresSubrubros(c);
+    /* Si el rubro no está en el catálogo, EU.catalogo.nombre() devuelve el
+       identificador crudo. Al equipo eso le sirve, porque le dice que hay un
+       dato que arreglar. Al emprendedor no: leería "alimentos" en minúscula
+       sin entender nada. Pasa de verdad con fichas anteriores a que el
+       catálogo se pudiera editar. */
+    var enCatalogo = !!EU.catalogo.rubro(c.rubro);
+    var nombreRubro = enCatalogo ? EU.catalogo.nombre(c.rubro) : 'En revisión';
+    var subs = enCatalogo ? EU.catalogo.nombresSubrubros(c) : [];
     zona.innerHTML =
       '<p style="margin:0"><strong>' + esc(nombreRubro) + '</strong>' +
       (subs.length ? ' · ' + esc(subs.join(', ')) : '') + '</p>' +
@@ -158,8 +164,10 @@ EU.alEstarListo(function () {
         ? '<p style="margin:.35rem 0 0;font-size:.9rem;color:var(--tinta-2)">' +
           esc(etiquetas.join(' · ')) + '</p>'
         : '') +
-      '<p class="pista" style="margin:.4rem 0 0">Lo asignó el equipo. Si crees que no ' +
-      'corresponde, escríbenos y lo revisamos.</p>';
+      '<p class="pista" style="margin:.4rem 0 0">' +
+      (enCatalogo
+        ? 'Lo asignó el equipo. Si crees que no corresponde, escríbenos y lo revisamos.'
+        : 'Estamos revisando en qué categoría queda tu emprendimiento.') + '</p>';
   }
 
   pintarClasificacion(ficha);
