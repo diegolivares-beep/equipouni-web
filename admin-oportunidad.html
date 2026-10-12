@@ -160,6 +160,14 @@
             <input type="text" id="o-cancelacion" name="cancelacion" placeholder="Devolución del 50% hasta 7 días antes">
           </div>
         </div>
+        <div class="campo">
+          <label for="o-motivo-cancelacion">Si suspendes el evento, por qué</label>
+          <input type="text" id="o-motivo-cancelacion" name="motivoCancelacion" maxlength="300"
+                 placeholder="La municipalidad no autorizó el permiso para esa fecha">
+          <p class="pista">Solo se usa si pones el estado en <strong>Cancelada</strong>. Al guardarla
+          así, a cada postulante le llega un correo con este motivo. Si lo dejas vacío el correo sale
+          igual, pero sin explicación, y te van a preguntar uno por uno.</p>
+        </div>
       </fieldset>
 
       <fieldset>

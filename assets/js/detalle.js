@@ -64,6 +64,16 @@ EU.alEstarListo(function () {
   if (o.asistencia) condiciones.push(['Asistencia', o.asistencia]);
   if (o.cancelacion) condiciones.push(['Cancelación', o.cancelacion]);
 
+  /* Si el evento se suspendió, eso es lo primero que hay que decir, y con
+     el motivo si lo escribieron. Antes la página se veía igual que una
+     cerrada por fecha ("ya no recibe postulaciones"), que es engañoso:
+     una cerró su plazo y la otra no va a ocurrir. */
+  var avisoSuspendido = o.estado === 'cancelada'
+    ? '<div class="aviso-suspendido"><strong>Este evento se suspendió.</strong>' +
+      '<p>' + (o.motivoCancelacion ? esc(o.motivoCancelacion) + ' ' : '') +
+      'Si postulaste, te avisamos por correo.</p></div>'
+    : '';
+
   /* El botón lleva a postular.html, que exige sesión: quien no la tenga pasa
      por iniciar sesión y vuelve acá. No hace falta comprobarlo dos veces. */
   var botonPostular = abierta
@@ -84,6 +94,8 @@ EU.alEstarListo(function () {
         '</p>' +
         '<h1>' + esc(o.nombre) + '</h1>' +
         '<p class="oportunidad__organiza">Organiza ' + esc(o.organizacion) + '</p>' +
+
+        avisoSuspendido +
 
         '<img class="detalle__foto" src="' + esc(EU.util.urlImagen(o, '1200x0')) + '" alt="' +
           esc(o.imagenAlt) + '" width="1400" height="600" decoding="async">' +

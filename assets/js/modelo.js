@@ -49,6 +49,9 @@ EU.modelo = {
       datosTransferencia: r.datos_transferencia || '',
       asistencia: r.asistencia,
       cancelacion: r.cancelacion,
+      /* Por qué se suspendió, si se suspendió. Lo escribe el equipo y viaja
+         al correo que le llega a cada postulante (hook avisos.pb.js). */
+      motivoCancelacion: r.motivo_cancelacion || '',
 
       rubrosBuscados: r.rubros_buscados || [],
       subrubrosBuscados: r.subrubros_buscados || [],
@@ -89,6 +92,7 @@ EU.modelo = {
       plazo_pago: o.plazoPago || '',
       datos_transferencia: o.datosTransferencia || '', asistencia: o.asistencia || '',
       cancelacion: o.cancelacion || '',
+      motivo_cancelacion: o.motivoCancelacion || '',
       rubros_buscados: o.rubrosBuscados || [],
       subrubros_buscados: o.subrubrosBuscados || [],
       requisitos: o.requisitos || [],

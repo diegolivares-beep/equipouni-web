@@ -371,6 +371,16 @@ img { max-width: 100%; height: auto; display: block; }
   padding: .8rem 1rem; margin: 0 0 .8rem; font-size: .9rem; border-radius: var(--r);
 }
 
+/* Un evento suspendido no puede verse igual que uno cerrado por fecha:
+   quien ya postuló entra a esta página justamente a entender qué pasó. */
+.aviso-suspendido {
+  border: 1px solid var(--teja); border-left-width: 4px;
+  background: var(--teja-piso);
+  padding: 1rem 1.1rem; margin: 0 0 1.4rem; border-radius: var(--r);
+}
+.aviso-suspendido strong { display: block; margin-bottom: .25rem; }
+.aviso-suspendido p { margin: 0; font-size: .92rem; }
+
 .migas { font-size: .82rem; color: var(--tinta-2); margin: 0 0 1rem; }
 .migas a { color: var(--tinta-2); }
 
@@ -473,6 +483,9 @@ img { max-width: 100%; height: auto; display: block; }
   font-weight: var(--peso-subtitulo); font-size: 1.02rem;
 }
 .postulacion__resumen small { color: var(--tinta-2); font-size: .84rem; }
+.postulacion__resumen small.postulacion__suspendido {
+  color: var(--teja); font-weight: var(--peso-subtitulo);
+}
 .postulacion__detalle { padding: .2rem 0 1.2rem; max-width: 640px; }
 .postulacion__detalle h4 { margin: 1rem 0 .4rem; }
 

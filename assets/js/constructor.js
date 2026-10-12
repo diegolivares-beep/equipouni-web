@@ -230,6 +230,7 @@ EU.alEstarListo(function () {
     f.elements.datosTransferencia.value = original.datosTransferencia || '';
     f.elements.asistencia.value = original.asistencia || '';
     f.elements.cancelacion.value = original.cancelacion || '';
+    f.elements.motivoCancelacion.value = original.motivoCancelacion || '';
     f.elements.estado.value = original.estado;
     if (f.elements.fechaPublicacion) f.elements.fechaPublicacion.value = original.fechaPublicacion || '';
     f.elements.responsable.value = original.responsable || '';
@@ -316,6 +317,7 @@ EU.alEstarListo(function () {
       datosTransferencia: f.elements.datosTransferencia.value.trim(),
       asistencia: f.elements.asistencia.value.trim(),
       cancelacion: f.elements.cancelacion.value.trim(),
+      motivoCancelacion: f.elements.motivoCancelacion.value.trim(),
       rubrosBuscados: Array.prototype.map.call(
         f.querySelectorAll('[name="rubros"]:checked'), function (c) { return c.value; }),
       subrubrosBuscados: Array.prototype.map.call(

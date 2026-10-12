@@ -122,6 +122,14 @@ EU.cuenta = {
              '</span></li>';
     }).join('');
 
+    /* Si el evento se suspendió hay que decirlo acá también, no solo en el
+       correo: el estado de la postulación sigue diciendo "postulado" o
+       "seleccionado", que por sí solo haría creer que el evento va. */
+    var suspendido = o.estado === 'cancelada'
+      ? '<small class="postulacion__suspendido">El evento se suspendió' +
+        (o.motivoCancelacion ? ': ' + esc(o.motivoCancelacion) : '') + '</small>'
+      : '';
+
     return '<details class="postulacion">' +
       '<summary>' +
         '<span class="postulacion__resumen">' +
@@ -129,6 +137,7 @@ EU.cuenta = {
           '<small>' + EU.util.rangoFechas(o.fechaInicio, o.fechaTermino) + ' en ' +
             esc(EU.territorio.nombreComuna(o.comuna)) +
             ' · postulada el ' + EU.util.dia(p.fecha) + '</small>' +
+          suspendido +
         '</span>' +
         EU.cuenta.etiquetaPostulacion(p.estado) +
       '</summary>' +
