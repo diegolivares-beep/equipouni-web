@@ -136,8 +136,25 @@ EU.arranque = (function () {
     return EU.api.listar('oportunidades', { orden: 'cierre_postulacion' })
       .then(function (items) {
         EU.datos.oportunidades = items.map(EU.modelo.oportunidadDesdeBase);
-        return EU.datos.oportunidades;
+        return traerLaDelEnlace();
       });
+  }
+
+  /* LAS OCULTAS NO SALEN EN EL LISTADO, pero se comparten por enlace
+     (?id=...). Si la página pide una que no vino en el listado, se trae
+     sola por su id: el backend la entrega si es oculta y la niega si es
+     un borrador. Sin esto el enlace de una oculta mostraba "no
+     encontramos esa oportunidad" aunque el backend sí la entregara. */
+  function traerLaDelEnlace() {
+    var id = EU.util.parametro('id');
+    var yaEsta = id && EU.datos.oportunidades.some(function (o) { return o.id === id; });
+    if (!id || yaEsta) return Promise.resolve(EU.datos.oportunidades);
+    return EU.api.obtener('oportunidades', id)
+      .then(function (r) {
+        EU.datos.oportunidades.push(EU.modelo.oportunidadDesdeBase(r));
+        return EU.datos.oportunidades;
+      })
+      .catch(function () { return EU.datos.oportunidades; });
   }
 
   function traerMiFicha() {
@@ -153,10 +170,20 @@ EU.arranque = (function () {
     });
   }
 
+  /* Con la oportunidad expandida: si el emprendedor postuló a una oculta,
+     esa oportunidad no viene en el listado y su postulación desaparecía
+     de "Mis postulaciones". Corre DESPUÉS de traerOportunidades, que
+     reemplaza la lista entera: en paralelo se perdían las agregadas. */
   function traerMisPostulaciones() {
-    return EU.api.listar('postulaciones', { orden: '-created' })
+    return EU.api.listar('postulaciones', { orden: '-created', expandir: 'oportunidad' })
       .then(function (items) {
         EU.datos.postulaciones = items.map(EU.modelo.postulacionDesdeBase);
+        items.forEach(function (i) {
+          var o = i.expand && i.expand.oportunidad;
+          if (o && !EU.datos.oportunidades.some(function (x) { return x.id === o.id; })) {
+            EU.datos.oportunidades.push(EU.modelo.oportunidadDesdeBase(o));
+          }
+        });
         return EU.datos.postulaciones;
       });
   }
@@ -213,8 +240,8 @@ EU.arranque = (function () {
       EU.api.revalidar().then(function (u) {
         if (!u) throw { estado: 401 };
         return traerCatalogo().then(function () {
-          return Promise.all([traerOportunidades(), traerMiFicha(), traerMisPostulaciones()]);
-        });
+          return Promise.all([traerOportunidades(), traerMiFicha()]);
+        }).then(traerMisPostulaciones);
       }).then(function () { cargando(false); if (alTerminar) alTerminar(); EU._marcarListo(); })
         .catch(fallo);
     },

@@ -76,17 +76,30 @@ EU.estados = {
     CANCELADA:  'cancelada'
   },
 
+  /* "publica": sale en el tablero. "porEnlace": no sale en el tablero,
+     pero quien tiene el enlace la abre.
+
+     OCULTA cambió de significado el 6-nov. El cliente pidió el 29-sep
+     poder repartir por WhatsApp eventos que no salen en el tablero ("aunque
+     esté oculta en la página sigue activa y la pueden usar"), y se le hizo
+     el botón de copiar enlace, pero acá oculta seguía siendo "la bajaste
+     del sitio": el enlace llevaba a "no encontramos esa oportunidad" y el
+     servidor rechazaba postular. Para bajar algo del todo está borrador.
+
+     CANCELADA se muestra como "Suspendida", que es la palabra del cliente
+     y la que ya usa el detalle público. El valor guardado sigue siendo
+     "cancelada" para no tocar el esquema. */
   oportunidadInfo: {
     borrador:   { etiqueta: 'Borrador',   publica: false, recibePostulaciones: false,
-                  ayuda: 'Se está armando. No la ve nadie más que tú.' },
-    oculta:     { etiqueta: 'Oculta',     publica: false, recibePostulaciones: false,
-                  ayuda: 'Estaba lista y la bajaste del sitio. Se puede volver a publicar.' },
+                  ayuda: 'Se está armando. No la ve nadie más que el equipo.' },
+    oculta:     { etiqueta: 'Oculta',     publica: false, porEnlace: true, recibePostulaciones: true,
+                  ayuda: 'No sale en el tablero, pero quien tenga el enlace la abre y puede postular.' },
     programada: { etiqueta: 'Programada', publica: false, recibePostulaciones: false,
                   ayuda: 'Se publica sola en la fecha que indiques.' },
     publicada:  { etiqueta: 'Publicada',  publica: true,  recibePostulaciones: true,
                   ayuda: 'Visible en el tablero y recibiendo postulaciones.' },
-    cancelada:  { etiqueta: 'Cancelada',  publica: true,  recibePostulaciones: false,
-                  ayuda: 'Se suspendió. Sigue visible para avisarle a quien postuló.' }
+    cancelada:  { etiqueta: 'Suspendida', publica: true,  recibePostulaciones: false,
+                  ayuda: 'El evento se suspendió. Sigue visible para que se entere quien llegue.' }
   },
 
   /* ---------- Postulación ---------- */

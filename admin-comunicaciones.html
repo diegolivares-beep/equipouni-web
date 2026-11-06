@@ -20,20 +20,18 @@
 <main id="contenido" class="bloque">
   <div class="envoltura">
     <h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">Comunicaciones</h1>
-    <p class="angosto">Hay dos cosas acá. Arriba, los tres correos que la plataforma manda
-    sola y los textos con los que los manda. Abajo, los envíos por lote, que se revisan
-    completos antes de salir.</p>
+    <p class="angosto">Arriba, los textos de todos los correos que manda la plataforma, para
+    que los cambies cuando quieras. Abajo, los envíos por lote, que se mandan desde acá.</p>
 
     <section class="control-seccion" style="margin-top:1.4rem">
-      <h2 style="font-size:1.3rem">Los tres correos automáticos</h2>
-      <p class="angosto">Salen solos, sin que nadie apriete nada: cuando validas una ficha,
-      cuando la devuelves con observaciones, y cuando marcas a alguien como seleccionado.
-      Puedes cambiar los textos cuando quieras y el cambio vale desde el siguiente envío.</p>
-      <p class="angosto pista">Lo que va entre llaves se reemplaza al enviar. Disponibles:
-      <code>{nombre}</code> de la persona, <code>{emprendimiento}</code>,
-      <code>{rubro}</code>, <code>{observaciones}</code>, <code>{oportunidad}</code>,
-      <code>{transferencia}</code> y <code>{sitio}</code>. Si escribes una llave que no
-      está en esa lista, se manda tal cual y queda fea en el correo.</p>
+      <h2 style="font-size:1.3rem">Los textos de los correos</h2>
+      <p class="angosto">Cuatro salen solos, sin que nadie apriete nada: cuando validas una
+      ficha, cuando la devuelves con observaciones, cuando marcas a alguien como seleccionado
+      y cuando suspendes un evento. Los otros dos son los de lote, que mandas tú desde abajo.
+      El cambio de texto vale desde el siguiente envío.</p>
+      <p class="angosto pista">Lo que va entre llaves se reemplaza al enviar por el dato de
+      cada persona. Cada correo dice qué llaves acepta. Si escribes una que no está en su
+      lista, se manda tal cual y queda fea en el correo.</p>
       <p class="angosto pista">El aviso de selección lleva los datos de transferencia de
       esa oportunidad. Si una oportunidad no los tiene cargados, ese correo no se manda:
       diría "paga" sin decir dónde.</p>
@@ -43,8 +41,9 @@
 
     <section class="control-seccion">
       <h2 style="font-size:1.3rem">Envíos por lote</h2>
-      <p class="angosto">Cambiar estados y enviar correos son acciones separadas a
-      propósito: primero se revisa el lote completo, después se envía.</p>
+      <p class="angosto">Eliges una oportunidad y ves a quién le llega cada correo. Al
+      apretar enviar, le llega a cada persona de la lista que todavía no lo haya recibido:
+      apretar dos veces no le manda el mismo correo dos veces a nadie.</p>
 
       <div class="acciones-lote" style="margin-top:1.4rem">
         <label>Oportunidad
@@ -83,92 +82,156 @@ EU.alEstarListo(function () {
     sel.appendChild(op);
   });
 
-  /* Plantilla del correo según el estado. Con los datos reales de la
-     oportunidad: monto, plazo y fechas, nunca texto genérico. */
-  function plantilla(estado, o) {
-    if (estado === 'seleccionado') {
-      return 'Asunto: Quedaste seleccionado en ' + o.nombre + '\n\n' +
-        'Tu emprendimiento tiene un cupo en ' + o.nombre + ' (' +
-        EU.util.rangoFechas(o.fechaInicio, o.fechaTermino) + ', ' +
-        EU.territorio.nombreComuna(o.comuna) + ').\n' +
-        'Valor de participación: ' + EU.util.pesos(o.valor) + '.\n' +
-        'Plazo de pago: ' + (o.plazoPago || 'ver bases') + '.\n' +
-        'Al transferir, responde este correo con el comprobante para confirmar tu cupo.';
-    }
-    if (estado === 'confirmado') {
-      return 'Asunto: Participación confirmada en ' + o.nombre + '\n\n' +
-        'Recibimos y validamos tu pago. Tu cupo está confirmado.\n' +
-        'Lugar: ' + o.direccion + ', ' + EU.territorio.nombreComuna(o.comuna) + '.\n' +
-        'Horario: ' + (o.horario || 'por confirmar') + '. ' +
-        (o.asistencia ? 'Asistencia: ' + o.asistencia : '');
-    }
-    return 'Asunto: Resultado de tu postulación a ' + o.nombre + '\n\n' +
-      'El proceso de selección cerró y esta vez tu emprendimiento no quedó con cupo.\n' +
-      'Tu ficha queda vigente para las próximas oportunidades, y si se libera un cupo ' +
-      'y aceptaste ser contactado, te vamos a escribir.';
+  /* ---------- Envíos por lote ----------
+     Hasta el 6-nov esta sección armaba el texto y el botón "Enviar este
+     lote" no mandaba nada: escribía "listo para copiar". Ahora llama a la
+     ruta /api/eu/lote del backend (avisos.pb.js), que solo acepta a un
+     administrador, usa las plantillas de arriba y anota en cada
+     postulación qué lote recibió, para no repetirlo. */
+
+  function nombreDe(p) {
+    var fi = EU.datos.emprendedor(p.emprendedor);
+    return fi ? fi.emprendimiento.nombre + (fi.representante.correo ? ' (' + fi.representante.correo + ')' : '') : p.emprendedor;
+  }
+  function marcas(p) {
+    var v = p._registro && p._registro.avisos_lote;
+    return (v && typeof v === 'object') ? v : {};
   }
 
-  function render() {
+  function render(mensaje) {
     var o = sel.value ? EU.repo.oportunidades.obtener(sel.value) : null;
     if (!o) { zona.innerHTML = ''; return; }
-
     var posts = EU.datos.postulacionesA(o.id);
-    var lotes = [
-      { estado: 'seleccionado', titulo: 'Seleccionados: instrucciones de pago' },
-      { estado: 'confirmado', titulo: 'Confirmados: información final' },
-      { estado: 'postulado', titulo: 'Postulados: resultado al cerrar la selección' }
-    ];
 
-    zona.innerHTML = lotes.map(function (l) {
-      var del = posts.filter(function (p) { return p.estado === l.estado; });
-      var nombres = del.map(function (p) {
-        var fi = EU.datos.emprendedor(p.emprendedor);
-        return fi ? fi.emprendimiento.nombre + ' (' + fi.representante.correo + ')' : p.emprendedor;
-      });
+    /* Seleccionados: su correo sale solo al marcarlos, uno por uno. Acá
+       solo se ve a quién le llegó y a quién no, y por qué. */
+    var sels = posts.filter(function (p) { return p.estado === 'seleccionado'; });
+    var htmlSel = sels.length
+      ? '<ul class="lista-simple">' + sels.map(function (p) {
+          var llego = p._registro && p._registro.aviso_estado === 'seleccionado';
+          return '<li>' + esc(nombreDe(p)) + ': ' + (llego
+            ? 'le llegó el aviso con los datos de pago.'
+            : '<strong>no le llegó</strong>' + (o.datosTransferencia ? '.' :
+              ', porque la oportunidad no tiene datos de transferencia. Cárgalos en la oportunidad.')) +
+            '</li>';
+        }).join('') + '</ul>'
+      : '<p class="pista">Nadie seleccionado todavía.</p>';
 
-      var advertencia = '';
-      if (l.estado === 'postulado' && EU.estados.recibePostulaciones(o)) {
-        advertencia = '<p class="aviso-categoria">La postulación sigue abierta: este lote ' +
-          'se envía recién cuando cierre la selección, o le estarías diciendo "no quedaste" ' +
-          'a gente que aún puede quedar.</p>';
+    function bloqueLote(tipo, titulo, explicacion, estados, bloqueo) {
+      var gente = posts.filter(function (p) { return estados.indexOf(p.estado) !== -1; });
+      var faltan = gente.filter(function (p) { return !marcas(p)[tipo]; });
+      var lista = gente.length
+        ? '<ul class="lista-simple">' + gente.map(function (p) {
+            var cuando = marcas(p)[tipo];
+            return '<li>' + esc(nombreDe(p)) + (cuando ? ' · <small>ya lo recibió el ' + esc(EU.util.dia(cuando)) + '</small>' : '') + '</li>';
+          }).join('') + '</ul>'
+        : '<p class="pista">Nadie en este grupo.</p>';
+      var boton = '';
+      if (bloqueo) {
+        boton = '<p class="aviso-categoria">' + esc(bloqueo) + '</p>';
+      } else if (faltan.length) {
+        boton = '<p class="acciones"><button type="button" class="boton" data-lote="' + tipo +
+          '" data-cuantos="' + faltan.length + '">Enviar a ' +
+          (faltan.length === 1 ? '1 persona' : faltan.length + ' personas') + '</button></p>';
+      } else if (gente.length) {
+        boton = '<p class="pista">Ya les llegó a todos.</p>';
       }
-
       return '<section class="control-seccion">' +
-        '<h2 style="font-size:1.2rem">' + esc(l.titulo) + ' · ' + del.length + ' destinatario(s)</h2>' +
-        (del.length
-          ? advertencia +
-            '<p style="font-size:.9rem;color:var(--tinta-2)">' + esc(nombres.join(' · ')) + '</p>' +
-            '<pre class="vista-correo">' + esc(plantilla(l.estado, o)) + '</pre>' +
-            '<p class="acciones">' +
-              '<button type="button" class="boton" data-enviar="' + l.estado + '">Enviar este lote</button>' +
-            '</p>'
-          : '<p style="font-size:.9rem;color:var(--tinta-2)">Nadie en este estado.</p>') +
-      '</section>';
-    }).join('') +
-    '<p id="mensaje" class="mensaje-form" role="status" aria-live="polite"></p>';
+        '<h2 style="font-size:1.2rem">' + esc(titulo) + ' · ' + gente.length + '</h2>' +
+        '<p class="pista">' + esc(explicacion) + '</p>' + lista + boton + '</section>';
+    }
+
+    var abierta = EU.estados.recibePostulaciones(o);
+    zona.innerHTML =
+      '<section class="control-seccion">' +
+        '<h2 style="font-size:1.2rem">Seleccionados · ' + sels.length + '</h2>' +
+        '<p class="pista">A ellos no se les manda nada desde acá: el correo con los datos de ' +
+        'pago les llega solo en el momento en que los marcas como seleccionados.</p>' + htmlSel +
+      '</section>' +
+      bloqueLote('confirmado', 'Confirmados: información final',
+        'Para quienes ya pagaron: lugar, fechas y horario. Usa el texto "Confirmados" de arriba.',
+        ['confirmado'], '') +
+      bloqueLote('resultado', 'Resultado para quienes no quedaron',
+        'Para quienes siguen en "Postulado" o quedaron en "No seleccionado". Usa el texto "Resultado" de arriba.',
+        ['postulado', 'no_seleccionado'],
+        abierta ? 'La postulación sigue abierta hasta el ' + EU.util.diaConAno(o.cierrePostulacion) +
+          '. Este correo se manda cuando cierre: antes le dirías "no quedaste" a gente que todavía puede quedar.' : '') +
+      '<p id="mensaje" class="mensaje-form" role="status" aria-live="polite">' + esc(mensaje || '') + '</p>';
   }
 
-  sel.addEventListener('change', render);
+  sel.addEventListener('change', function () { render(''); });
 
-  document.getElementById('lotes').addEventListener('click', function (e) {
-    if (!e.target.hasAttribute('data-enviar')) return;
-    document.getElementById('mensaje').textContent =
-      'Lote revisado y listo para copiar. El envío por lote todavía se hace a mano: los ' +
-      'que sí salen solos son los tres de arriba.';
+  /* Después de enviar se vuelven a traer las postulaciones de esa
+     oportunidad, para mostrar quién ya lo recibió. */
+  function refrescar(idOp) {
+    return EU.api.listar('postulaciones', { filtro: 'oportunidad = "' + idOp + '"' })
+      .then(function (items) {
+        items.forEach(function (r) {
+          var p = EU.datos.postulacion(r.id);
+          if (p) {
+            var nueva = EU.modelo.postulacionDesdeBase(r);
+            for (var k in nueva) p[k] = nueva[k];
+          }
+        });
+      });
+  }
+
+  zona.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-lote]') : null;
+    if (!b) return;
+    var o = EU.repo.oportunidades.obtener(sel.value);
+    var tipo = b.getAttribute('data-lote');
+    var n = Number(b.getAttribute('data-cuantos'));
+    var que = tipo === 'confirmado' ? 'la información final' : 'el resultado';
+    if (!window.confirm('Vas a mandar ' + que + ' de "' + o.nombre + '" a ' +
+        (n === 1 ? '1 persona' : n + ' personas') + '.\n\nEl correo no se puede retirar. ¿Enviar?')) return;
+    b.disabled = true;
+    b.textContent = 'Enviando…';
+    fetch(EU.api.BASE + '/api/eu/lote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: EU.api.token() },
+      body: JSON.stringify({ oportunidad: o.id, tipo: tipo })
+    }).then(function (r) {
+      return r.json().then(function (d) {
+        if (!r.ok) throw new Error(d.message || 'No se pudo enviar.');
+        return d;
+      });
+    }).then(function (d) {
+      var texto = 'Enviados: ' + d.enviados + '.' +
+        (d.yaTenian ? ' Ya lo tenían: ' + d.yaTenian + '.' : '') +
+        (d.fallidos && d.fallidos.length ? ' No se pudo con: ' + d.fallidos.join(' · ') : '');
+      return refrescar(o.id).then(function () { render(texto); });
+    }).catch(function (err) {
+      render(err.message || 'No se pudo enviar.');
+    });
   });
 
-  /* ---------- Los textos de los tres correos automáticos ----------
+  /* ---------- Los textos de los correos ----------
      Viven en la colección plantillas_correo y no en el código, porque el
-     cliente pidió poder cambiarlos sin depender de un despliegue. El hook
-     avisos.pb.js es el que los lee al momento de enviar. */
+     cliente pidió poder cambiarlos sin depender de un despliegue. Los
+     hooks de avisos.pb.js los leen al momento de enviar. Hasta el 6-nov
+     esta lista tenía solo tres: el de evento suspendido existía en la
+     base pero no se podía editar desde acá. */
 
   var NOMBRES = {
     ficha_validada: ['Ficha validada',
-      'Sale cuando validas una ficha. Es el que la persona está esperando.'],
+      'Sale solo cuando validas una ficha. Es el que la persona está esperando.',
+      '{nombre} {emprendimiento} {rubro} {sitio}'],
     ficha_correccion: ['Ficha con observaciones',
-      'Sale cuando la devuelves a corrección, con la observación que escribiste.'],
+      'Sale solo cuando la devuelves a corrección, con la observación que escribiste.',
+      '{nombre} {emprendimiento} {observaciones} {sitio}'],
     seleccionado: ['Postulante seleccionado',
-      'Sale cuando marcas a alguien como seleccionado. Lleva los datos para pagar.']
+      'Sale solo cuando marcas a alguien como seleccionado. Lleva los datos para pagar.',
+      '{nombre} {emprendimiento} {oportunidad} {transferencia} {sitio}'],
+    oportunidad_cancelada: ['Evento suspendido',
+      'Sale solo cuando suspendes un evento, a cada seleccionado y confirmado, con el motivo.',
+      '{nombre} {emprendimiento} {oportunidad} {motivo} {sitio}'],
+    lote_confirmado: ['Confirmados (lote)',
+      'Lo mandas tú desde abajo, a quienes ya pagaron.',
+      '{nombre} {emprendimiento} {oportunidad} {fechas} {lugar} {horario} {asistencia} {sitio}'],
+    lote_resultado: ['Resultado (lote)',
+      'Lo mandas tú desde abajo, a quienes no quedaron, cuando cierra la postulación.',
+      '{nombre} {emprendimiento} {oportunidad} {sitio}']
   };
 
   var zonaPl = document.getElementById('plantillas');
@@ -183,8 +246,8 @@ EU.alEstarListo(function () {
              'border-radius:var(--r);font:inherit';
 
   function pintarPlantillas(lista) {
-    /* Se recorre el orden de NOMBRES y no el de la base, para que las tres
-       salgan siempre en el mismo orden y en el del proceso. */
+    /* Se recorre el orden de NOMBRES y no el de la base, para que salgan
+       siempre en el mismo orden y en el del proceso. */
     zonaPl.innerHTML = Object.keys(NOMBRES).map(function (clave) {
       var p = lista.filter(function (x) { return x.clave === clave; })[0];
       if (!p) {
@@ -199,6 +262,7 @@ EU.alEstarListo(function () {
         '<span class="estado estado--' + (p.activa ? 'abierta' : 'cerrada') + '">' +
           (p.activa ? 'Activo' : 'Apagado') + '</span></summary>' +
         '<div class="postulacion__detalle" style="max-width:none">' +
+          '<p class="pista">Llaves que acepta este correo: <code>' + esc(info[2]) + '</code></p>' +
           '<div class="campo"><label for="a-' + esc(clave) + '">Asunto</label>' +
             '<input type="text" id="a-' + esc(clave) + '" data-asunto="' + esc(clave) +
             '" maxlength="200" style="' + CAJA + '" value="' + esc(p.asunto) + '"></div>' +
@@ -257,8 +321,8 @@ EU.alEstarListo(function () {
         .then(traerPlantillas)
         .then(function () {
           avisarPl(apagando
-            ? 'Apagado: ese aviso deja de salir hasta que lo vuelvas a encender.'
-            : 'Encendido: ese aviso vuelve a salir solo.');
+            ? 'Apagado: ese correo deja de salir hasta que lo vuelvas a encender.'
+            : 'Encendido: ese correo vuelve a salir.');
         })
         .catch(function (err) {
           b.disabled = false;

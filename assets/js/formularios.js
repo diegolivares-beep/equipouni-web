@@ -18,6 +18,31 @@ EU.alEstarListo(function () {
   var form = document.getElementById('form-sesion');
   if (!form) return;
 
+  /* VER LA CONTRASEÑA (pedido del cliente el 2-nov). Un botón con texto
+     y no un ícono: se entiende sin adivinar y lo lee un lector de
+     pantalla. Cambiar el tipo del campo no cambia su valor, así que el
+     envío sigue leyendo lo mismo. */
+  Array.prototype.forEach.call(form.querySelectorAll('input[type="password"]'), function (campo) {
+    var envoltura = document.createElement('span');
+    envoltura.className = 'clave-ver';
+    campo.parentNode.insertBefore(envoltura, campo);
+    envoltura.appendChild(campo);
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'clave-ver__boton';
+    b.textContent = 'Mostrar';
+    b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', 'Mostrar la contraseña');
+    b.addEventListener('click', function () {
+      var ver = campo.type === 'password';
+      campo.type = ver ? 'text' : 'password';
+      b.textContent = ver ? 'Ocultar' : 'Mostrar';
+      b.setAttribute('aria-pressed', String(ver));
+      b.setAttribute('aria-label', ver ? 'Ocultar la contraseña' : 'Mostrar la contraseña');
+    });
+    envoltura.appendChild(b);
+  });
+
   var esRegistro = form.getAttribute('data-modo') === 'registro';
   var mensaje = document.getElementById('mensaje-form');
   var boton = form.querySelector('button[type="submit"]');
@@ -63,12 +88,20 @@ EU.alEstarListo(function () {
         avisar('Las dos contraseñas no coinciden.', true);
         return;
       }
+      /* El teléfono es opcional acá, pero si viene, en cualquier formato y
+         con 9 dígitos: el mismo criterio que la ficha. */
+      var telefono = form.elements.telefono ? form.elements.telefono.value.trim() : '';
+      if (telefono) {
+        var tel = EU.util.telefono(telefono);
+        if (!tel.ok) { avisar(tel.error, true); form.elements.telefono.focus(); return; }
+        telefono = tel.valor;
+      }
       ocupado(true);
       EU.api.registrar({
         correo: correo,
         clave: clave,
         nombre: form.elements.nombre.value.trim(),
-        telefono: form.elements.telefono ? form.elements.telefono.value.trim() : ''
+        telefono: telefono
       }).then(function () {
         location.href = 'cuenta-ficha.html?nueva=1';
       }).catch(function (err) {

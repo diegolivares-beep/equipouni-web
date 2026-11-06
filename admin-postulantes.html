@@ -255,7 +255,8 @@ EU.alEstarListo(function () {
         '</select>' +
         '<button type="button" class="boton" id="aplicar-lote">Aplicar</button>' +
         '<button type="button" class="boton boton--linea" id="exportar-pdf">Exportar a PDF</button>' +
-        '<span class="resumen-filtros">Los correos se envían aparte, en Comunicaciones.</span>' +
+        '<span class="resumen-filtros">Pasar a Seleccionado le manda en el acto el correo con ' +
+          'los datos de pago. Los demás correos se mandan desde Comunicaciones.</span>' +
       '</div>' +
       '<p id="mensaje-lote" class="mensaje-form" role="status" aria-live="polite">' +
         esc(mensajeLote) + '</p>' +
@@ -329,6 +330,19 @@ EU.alEstarListo(function () {
 
       if (!accion) { mensajeLote = 'Elige una acción.'; render(); return; }
       if (!marcadas.length) { mensajeLote = 'Marca al menos una fila.'; render(); return; }
+
+      /* Las dos acciones que no se deshacen piden confirmación. Hasta el
+         6-nov ninguna la pedía, y la pantalla además decía que los correos
+         se mandaban aparte: marcar Seleccionado manda en el acto el correo
+         con los datos de pago, y la renuncia no tiene vuelta atrás. */
+      var n = marcadas.length;
+      var gente = n === 1 ? '1 persona' : n + ' personas';
+      if (accion === 'seleccionado' && !window.confirm(
+          'Vas a seleccionar a ' + gente + '.\n\nA cada una le llega EN ESTE MOMENTO el correo de ' +
+          'selección con los datos para pagar. Ese correo no se puede retirar. ¿Seguir?')) return;
+      if (accion === 'renuncio' && !window.confirm(
+          'Vas a registrar la renuncia de ' + gente + '.\n\nNo se puede deshacer: esa postulación ' +
+          'queda cerrada y el cupo se libera. ¿Seguir?')) return;
 
       mensajeLote = 'Aplicando…';
       render();

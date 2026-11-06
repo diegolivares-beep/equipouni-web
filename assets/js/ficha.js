@@ -198,6 +198,14 @@ EU.alEstarListo(function () {
   f.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!f.checkValidity()) { f.reportValidity(); return; }
+    /* RUT y teléfono en cualquier formato: se revisan y se dejan escritos
+       en la forma en que se guardan, así la persona ve qué quedó. */
+    var rut = EU.util.rut(f.elements['rep-rut'].value);
+    if (!rut.ok) { avisar(rut.error, true); f.elements['rep-rut'].focus(); return; }
+    f.elements['rep-rut'].value = rut.valor;
+    var tel = EU.util.telefono(f.elements['rep-telefono'].value);
+    if (!tel.ok) { avisar(tel.error, true); f.elements['rep-telefono'].focus(); return; }
+    f.elements['rep-telefono'].value = tel.valor;
     /* Lo único que se exige de más: que "qué vendes" diga algo. Es lo que
        el equipo va a leer para clasificar, así que una línea de tres
        palabras deja la ficha imposible de resolver. El mínimo es corto a
@@ -286,6 +294,7 @@ EU.alEstarListo(function () {
           ' <span style="font-size:.9rem;color:var(--tinta-2)">' +
           esc(EU.estados.info('ficha', nueva.estado).descripcion) + '</span>';
         pintarFotos(nueva);
+        pintarDocumentos(nueva);
         pintarLogo(nueva);
         pintarClasificacion(nueva);
       }
@@ -299,12 +308,27 @@ EU.alEstarListo(function () {
 
   var porSubir = { fotos: [], documentos: [], logo: [] };
 
+  /* SUMAR, NO REEMPLAZAR. En PocketBase mandar el campo a secas
+     ("fotos") reemplaza todos los archivos que tenía; con "fotos+" los
+     agrega. Hasta el 6-nov se mandaba a secas: subir una foto nueva
+     borraba todas las anteriores, y adjuntar un respaldo borraba los
+     otros documentos (se comprobó en una copia local: el primer PDF
+     desaparecía del disco). El logo es uno solo, así que ese sí se
+     reemplaza. */
+  var NOMBRE_SUBIDA = { fotos: 'fotos+', documentos: 'documentos+', logo: 'logo' };
+  var TOPE = { fotos: 8, documentos: 6 };
+
+  function cuantosHay(campo) {
+    var r = ficha && ficha._registro;
+    return r && r[campo] ? r[campo].length : 0;
+  }
+
   function subirPendientes(idFicha) {
     var campos = Object.keys(porSubir).filter(function (c) { return porSubir[c].length; });
     if (!campos.length) return Promise.resolve();
     var fd = new FormData();
     campos.forEach(function (campo) {
-      porSubir[campo].forEach(function (archivo) { fd.append(campo, archivo); });
+      porSubir[campo].forEach(function (archivo) { fd.append(NOMBRE_SUBIDA[campo], archivo); });
     });
     return fetch(EU.api.BASE + '/api/collections/fichas/records/' + idFicha, {
       method: 'PATCH',
@@ -322,11 +346,54 @@ EU.alEstarListo(function () {
     var fotos = (f2 && f2.productos.fotos) || [];
     zona.innerHTML = fotos.length
       ? fotos.map(function (fo) {
-          return '<img src="' + esc(fo.miniatura || fo.url) + '" alt="Producto de ' +
-                 esc(f2.emprendimiento.nombre) + '" width="160" height="120" loading="lazy">';
+          return '<figure style="margin:0;display:inline-block;text-align:center">' +
+            '<img src="' + esc(fo.miniatura || fo.url) + '" alt="Producto de ' +
+            esc(f2.emprendimiento.nombre) + '" width="160" height="120" loading="lazy">' +
+            '<figcaption><button type="button" class="enlace-boton" data-quitar="fotos" ' +
+            'data-archivo="' + esc(fo.archivo) + '">Quitar</button></figcaption></figure>';
         }).join('')
       : '<p class="pista">Todavía no has subido fotografías.</p>';
   }
+
+  /* Hasta el 6-nov el emprendedor no veía qué documentos había subido. */
+  function pintarDocumentos(f2) {
+    var zona = document.getElementById('documentos-actuales');
+    if (!zona) return;
+    var docs = (f2 && f2.documentos) || [];
+    zona.innerHTML = docs.length
+      ? '<ul class="lista-simple" style="margin-top:.6rem">' + docs.map(function (d) {
+          return '<li>' + esc(d.archivo) + ' <button type="button" class="enlace-boton" ' +
+            'data-quitar="documentos" data-archivo="' + esc(d.archivo) + '">Quitar</button></li>';
+        }).join('') + '</ul>'
+      : '';
+  }
+
+  /* QUITAR UN ARCHIVO PUNTUAL, con "campo-" de PocketBase. Ahora que los
+     archivos se suman, sin esto quien llega al tope no podría cambiar
+     ninguna foto. Cambiar la ficha la devuelve a revisión si estaba
+     validada (lo hace el servidor), así que se dice antes. */
+  f.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-quitar]') : null;
+    if (!b || !ficha.id) return;
+    var campo = b.getAttribute('data-quitar');
+    var archivo = b.getAttribute('data-archivo');
+    var texto = campo === 'fotos' ? '¿Quitar esta foto?' : '¿Quitar este documento?';
+    if (ficha.estado === 'validada') texto += '\n\nTu ficha está validada: al cambiarla vuelve a revisión.';
+    if (!window.confirm(texto)) return;
+    var cuerpo = {};
+    cuerpo[campo + '-'] = [archivo];
+    b.disabled = true;
+    EU.api.actualizar('fichas', ficha.id, cuerpo)
+      .then(function () { return EU.arranque.recargarMiFicha(); })
+      .then(function (nueva) {
+        if (nueva) { ficha = nueva; pintarFotos(nueva); pintarDocumentos(nueva); }
+        avisar(campo === 'fotos' ? 'Listo, quitamos la foto.' : 'Listo, quitamos el documento.');
+      })
+      .catch(function (err) {
+        b.disabled = false;
+        avisar((err && err.message) || 'No se pudo quitar. Inténtalo otra vez.', true);
+      });
+  });
 
   function pintarLogo(f2) {
     var zona = document.getElementById('logo-actual');
@@ -340,6 +407,11 @@ EU.alEstarListo(function () {
   }
 
   pintarLogo(ficha);
+  /* Hasta el 6-nov las fotos se pintaban solo después de guardar: al
+     abrir "Mi ficha" el recuadro quedaba vacío aunque hubiera fotos, y
+     quien no las veía las volvía a subir (lo que además las borraba). */
+  pintarFotos(ficha);
+  pintarDocumentos(ficha);
 
   var entradaLogo = document.getElementById('subir-logo');
   if (entradaLogo) {
@@ -350,23 +422,36 @@ EU.alEstarListo(function () {
     });
   }
 
+  /* Con los archivos sumándose, hay que avisar antes de pasarse del tope:
+     PocketBase rechaza la subida entera si se pasa, y la persona no sabría
+     por qué. Se toman los que caben y se dice cuántos quedaron fuera. */
+  function elegir(campo, entrada, idAviso, singular, plural) {
+    var elegidos = Array.prototype.slice.call(entrada.files);
+    var libres = TOPE[campo] - cuantosHay(campo);
+    var fuera = 0;
+    if (elegidos.length > libres) {
+      fuera = elegidos.length - Math.max(libres, 0);
+      elegidos = elegidos.slice(0, Math.max(libres, 0));
+    }
+    porSubir[campo] = elegidos;
+    var n = elegidos.length;
+    var aviso = document.getElementById(idAviso);
+    aviso.className = 'mensaje-form' + (fuera ? ' mensaje-form--error' : '');
+    aviso.textContent = (n ? n + ' ' + (n === 1 ? singular : plural) + ' para subir al guardar. ' : '') +
+      (fuera ? 'Quedaron fuera ' + fuera + ': el tope es ' + TOPE[campo] +
+               '. Quita alguno de los que ya tienes para hacer espacio.' : '');
+  }
+
   var entradaFotos = document.getElementById('subir-fotos');
   if (entradaFotos) {
     entradaFotos.addEventListener('change', function () {
-      porSubir.fotos = Array.prototype.slice.call(entradaFotos.files);
-      var n = porSubir.fotos.length;
-      document.getElementById('aviso-fotos').textContent = n
-        ? n + (n === 1 ? ' foto lista para subir al guardar.' : ' fotos listas para subir al guardar.')
-        : '';
+      elegir('fotos', entradaFotos, 'aviso-fotos', 'foto lista', 'fotos listas');
     });
   }
   var entradaDocs = document.getElementById('subir-documentos');
   if (entradaDocs) {
     entradaDocs.addEventListener('change', function () {
-      porSubir.documentos = Array.prototype.slice.call(entradaDocs.files);
-      var n = porSubir.documentos.length;
-      document.getElementById('aviso-documentos').textContent = n
-        ? n + (n === 1 ? ' archivo listo para subir.' : ' archivos listos para subir.') : '';
+      elegir('documentos', entradaDocs, 'aviso-documentos', 'archivo listo', 'archivos listos');
     });
   }
 });

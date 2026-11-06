@@ -57,20 +57,52 @@ EU.alEstarListo(function () {
 
   document.getElementById('resumen').textContent = lista.length + ' fichas registradas';
 
-  document.getElementById('filas').innerHTML = lista.map(function (fi) {
-    var posts = EU.datos.postulacionesDe(fi.id);
-    return '<tr>' +
-      '<td><strong>' + esc(fi.emprendimiento.nombre) + '</strong>' +
-        '<small>' + esc(fi.representante.nombre) + '</small></td>' +
-      '<td>' + esc(EU.admin.clasificacionCorta(fi)) + '</td>' +
-      '<td>' + esc(EU.territorio.nombreComuna(fi.emprendimiento.comuna)) + '</td>' +
-      '<td>' + esc(EU.estados.etiqueta('ficha', fi.estado)) + '</td>' +
-      '<td class="num">' + posts.length + '</td>' +
-      '<td><button type="button" class="enlace-boton" data-ver="' + esc(fi.id) + '">Ver ficha</button></td>' +
-    '</tr>' +
-    '<tr class="fila-detalle" data-detalle="' + esc(fi.id) + '" hidden><td colspan="6">' +
-      EU.admin.fichaCompleta(fi) + '</td></tr>';
-  }).join('');
+  /* SOLICITAR CORRECCIÓN DESDE ACÁ (pedido del cliente el 2-nov).
+     Hasta entonces solo se podía pedir corrección en Validaciones, o sea
+     a fichas que esperaban revisión. Si a una ficha ya validada se le
+     pasaba algo, no había cómo devolvérsela al emprendedor. Usa lo mismo
+     que Validaciones, así que le llega el mismo correo automático. */
+  function formularioCorreccion(fi) {
+    var yaEnCorreccion = fi.estado === 'correccion';
+    return '<form class="formulario" data-corregir="' + esc(fi.id) + '" ' +
+        'style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--borde)">' +
+      '<h3 style="font-size:1rem;margin:0 0 .5rem">Solicitar corrección</h3>' +
+      (yaEnCorreccion
+        ? '<p class="pista">Esta ficha ya está en corrección. Puedes cambiar la observación: ' +
+          'el emprendedor la ve al entrar, pero no le llega otro correo.</p>'
+        : '<p class="pista">La ficha vuelve a "Requiere corrección" y le llega un correo con lo ' +
+          'que escribas. Mientras no la corrija, no puede postular.</p>') +
+      '<div class="campo"><label>Qué parte de la ficha<select name="seccion">' +
+        EU.admin.SECCIONES.map(function (s) {
+          return '<option value="' + s[0] + '">' + esc(s[1]) + '</option>';
+        }).join('') +
+      '</select></label></div>' +
+      '<div class="campo"><label>Qué tiene que arreglar' +
+        '<span class="pista">Escríbelo como se lo dirías a él: es lo que lee.</span>' +
+        '<textarea name="observacion" rows="3" maxlength="500" required></textarea></label></div>' +
+      '<p><button type="submit" class="boton boton--linea">' +
+        (yaEnCorreccion ? 'Actualizar la observación' : 'Solicitar corrección') + '</button></p>' +
+      '<p class="mensaje-form" role="status" aria-live="polite"></p>' +
+    '</form>';
+  }
+
+  function pintar() {
+    document.getElementById('filas').innerHTML = lista.map(function (fi) {
+      var posts = EU.datos.postulacionesDe(fi.id);
+      return '<tr>' +
+        '<td><strong>' + esc(fi.emprendimiento.nombre) + '</strong>' +
+          '<small>' + esc(fi.representante.nombre) + '</small></td>' +
+        '<td>' + esc(EU.admin.clasificacionCorta(fi)) + '</td>' +
+        '<td>' + esc(EU.territorio.nombreComuna(fi.emprendimiento.comuna)) + '</td>' +
+        '<td>' + esc(EU.estados.etiqueta('ficha', fi.estado)) + '</td>' +
+        '<td class="num">' + posts.length + '</td>' +
+        '<td><button type="button" class="enlace-boton" data-ver="' + esc(fi.id) + '">Ver ficha</button></td>' +
+      '</tr>' +
+      '<tr class="fila-detalle" data-detalle="' + esc(fi.id) + '" hidden><td colspan="6">' +
+        EU.admin.fichaCompleta(fi) + formularioCorreccion(fi) + '</td></tr>';
+    }).join('');
+  }
+  pintar();
 
   document.getElementById('filas').addEventListener('click', function (e) {
     if (!e.target.hasAttribute('data-ver')) return;
@@ -78,6 +110,38 @@ EU.alEstarListo(function () {
     var fila = document.querySelector('[data-detalle="' + id + '"]');
     fila.hidden = !fila.hidden;
     e.target.textContent = fila.hidden ? 'Ver ficha' : 'Cerrar ficha';
+  });
+
+  document.getElementById('filas').addEventListener('submit', function (e) {
+    var form = e.target.closest('[data-corregir]');
+    if (!form) return;
+    e.preventDefault();
+    var id = form.getAttribute('data-corregir');
+    var texto = form.elements.observacion.value.trim();
+    var msg = form.querySelector('.mensaje-form');
+    if (!texto) {
+      msg.className = 'mensaje-form mensaje-form--error';
+      msg.textContent = 'Escribe qué tiene que arreglar.';
+      return;
+    }
+    msg.className = 'mensaje-form';
+    msg.textContent = 'Guardando…';
+    EU.admin.resolverFicha(id, 'corregir', texto, form.elements.seccion.value)
+      .then(function () {
+        pintar();
+        var fila = document.querySelector('[data-detalle="' + id + '"]');
+        if (fila) {
+          fila.hidden = false;
+          var nuevo = fila.querySelector('.mensaje-form');
+          if (nuevo) nuevo.textContent = 'Listo: la ficha quedó en corrección.';
+        }
+        var boton = document.querySelector('[data-ver="' + id + '"]');
+        if (boton) boton.textContent = 'Cerrar ficha';
+      })
+      .catch(function (err) {
+        msg.className = 'mensaje-form mensaje-form--error';
+        msg.textContent = (err && err.message) || 'No se pudo guardar.';
+      });
   });
 
   EU.admin.conectarDocumentos(document);

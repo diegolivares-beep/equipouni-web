@@ -23,6 +23,7 @@
       <h1 style="font-size:clamp(1.7rem,3vw,2.4rem)">Oportunidades</h1>
       <p><a class="boton" href="admin-oportunidad.html">Crear una oportunidad</a></p>
     </div>
+    <p id="aviso-guardada" class="mensaje-form" role="status" aria-live="polite"></p>
     <div class="tabla-envoltura">
       <table class="tabla">
         <thead><tr>
@@ -32,9 +33,10 @@
         <tbody id="filas"></tbody>
       </table>
     </div>
-    <p class="pista" style="margin-top:1rem">El estado interno controla la visibilidad:
-    borrador y vista previa no se publican; cerrada y cancelada se ven pero no reciben
-    postulaciones.</p>
+    <p class="pista" style="margin-top:1rem">Publicada sale en el tablero. Oculta no sale en
+    el tablero, pero quien tenga el enlace la abre y puede postular. Borrador y programada no
+    las ve nadie más que el equipo. Suspendida se ve, pero ya no recibe postulaciones. Cuando
+    pasa la fecha de cierre, cualquiera deja de recibir postulaciones sola.</p>
   </div>
 </main>
 
@@ -53,6 +55,15 @@ EU.arranque.admin(function () { EU.admin.montar(); });
 EU.alEstarListo(function () {
   'use strict';
   var esc = EU.util.esc;
+
+  /* El editor manda acá con ?guardada=<estado> después de guardar. Hasta
+     el 6-nov nadie lo leía, así que tras suspender un evento no quedaba
+     ninguna confirmación a la vista. */
+  var guardada = EU.util.parametro('guardada');
+  if (guardada) {
+    document.getElementById('aviso-guardada').textContent =
+      'Listo, la oportunidad quedó ' + guardada + '.';
+  }
 
   /* El panel ve TODAS las oportunidades, también borradores y canceladas.
      Orden: primero las que reciben postulaciones, luego por cierre. */

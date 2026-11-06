@@ -176,6 +176,18 @@ img { max-width: 100%; height: auto; display: block; }
 
 .boton--grande { font-size: .9rem; padding: .85rem 1.6rem; }
 
+/* Acciones que no se deshacen (suspender un evento). Con el tono de
+   alerta del sitio, no con el color de marca: no tiene que parecer el
+   botón principal. */
+.boton--peligro { background: var(--teja); border-color: var(--teja); color: #fff; }
+.boton--peligro:hover { background: var(--tinta); border-color: var(--tinta); }
+.zona-peligro {
+  margin-top: 2.6rem; padding: 1.2rem 1.3rem;
+  border: 1px solid var(--teja); border-left-width: 4px;
+  background: var(--teja-piso); border-radius: var(--r);
+}
+.zona-peligro h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
+
 .acciones { display: flex; gap: .7rem; flex-wrap: wrap; align-items: center; }
 
 /* ---------- Portada ---------- */
@@ -425,6 +437,19 @@ img { max-width: 100%; height: auto; display: block; }
 .campo input:not([type="checkbox"]):not([type="radio"]):hover,
 .campo select:hover, .campo textarea:hover { border-color: var(--tinta-2); }
 .campo textarea { min-height: 118px; resize: vertical; }
+
+/* Ver la contraseña: el botón va dentro del campo, a la derecha, y el
+   campo deja ese espacio libre para que el texto no quede debajo. */
+.clave-ver { position: relative; display: block; }
+.campo .clave-ver input:not([type="checkbox"]):not([type="radio"]) { padding-right: 5.4rem; }
+.clave-ver__boton {
+  position: absolute; right: .35rem; top: 50%; transform: translateY(-50%);
+  background: none; border: 0; border-radius: var(--r); cursor: pointer;
+  font: inherit; font-size: .8rem; font-weight: 600; color: var(--marca);
+  padding: .35rem .55rem;
+}
+.clave-ver__boton:hover { background: var(--marca-piso); }
+.clave-ver__boton:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
 .campo--fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.1rem; }
 
 .casilla {

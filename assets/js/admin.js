@@ -1,15 +1,15 @@
 /* ============================================================
-   PANEL ADMINISTRATIVO: esqueleto y operaciones en memoria
+   PANEL ADMINISTRATIVO: esqueleto y operaciones contra el backend
    ------------------------------------------------------------
-   El panel es la herramienta del equipo de EquipoUni. En la maqueta
-   las acciones (cambiar estados, aprobar fichas) operan sobre los
-   datos EN MEMORIA: sirven para probar el flujo completo y se
-   pierden al recargar, y el aviso superior lo dice.
+   El panel es la herramienta del equipo de EquipoUni. Todas las
+   acciones se guardan en el backend (PocketBase), que además vuelve a
+   revisar cada una: lo que se valida acá es solo para avisar antes.
 
-   Dos reglas de la especificación que este código hace cumplir:
-   - Ningún cambio de estado fuera de la tabla de transiciones.
-   - Cambiar estados y enviar correos son acciones separadas: aquí
-     no existe ningún botón que haga las dos cosas a la vez.
+   Ojo, corregido el 6-nov: este encabezado decía que cambiar estados y
+   mandar correos eran acciones separadas. No lo son desde el 30-sep:
+   validar una ficha, pedirle corrección, seleccionar a alguien o
+   suspender un evento mandan su correo automático en el acto. Por eso
+   esas acciones piden confirmación donde el correo no se puede retirar.
    ============================================================ */
 
 window.EU = window.EU || {};
@@ -21,8 +21,10 @@ EU.admin = {
     { archivo: 'admin-oportunidades.html',  texto: 'Oportunidades' },
     { archivo: 'admin-validaciones.html',   texto: 'Validaciones' },
     { archivo: 'admin-emprendedores.html',  texto: 'Emprendedores' },
-    { archivo: 'admin-catalogo.html',        texto: 'Catálogo' },
-    { archivo: 'admin-comunicaciones.html', texto: 'Comunicaciones' }
+    /* "Catálogo" a secas no decía de qué (pedido del cliente el 2-nov). */
+    { archivo: 'admin-catalogo.html',        texto: 'Catálogo de rubros' },
+    { archivo: 'admin-comunicaciones.html', texto: 'Comunicaciones' },
+    { archivo: 'admin-manual.html',         texto: 'Manual' }
   ],
 
   cabecera: function () {

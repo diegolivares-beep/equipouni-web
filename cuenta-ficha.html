@@ -41,7 +41,7 @@
           </div>
           <div>
             <label for="rep-rut">RUT
-              <span class="pista">Evita cuentas duplicadas de la misma persona.</span>
+              <span class="pista">Con o sin puntos y guion. Evita cuentas duplicadas.</span>
             </label>
             <input type="text" id="rep-rut" name="rep-rut" required>
           </div>
@@ -52,7 +52,9 @@
             <input type="email" id="rep-correo" name="rep-correo" required autocomplete="email">
           </div>
           <div>
-            <label for="rep-telefono">Teléfono</label>
+            <label for="rep-telefono">Teléfono
+              <span class="pista">9 dígitos, con o sin +56.</span>
+            </label>
             <input type="tel" id="rep-telefono" name="rep-telefono" required autocomplete="tel">
           </div>
         </div>
@@ -190,8 +192,9 @@
                  multiple style="position:absolute;left:-9999px">
         </p>
         <p class="pista">Inicio de actividades, resolución sanitaria o lo que hayas marcado.
-        PDF o foto, hasta 10 MB. Los ve solo el equipo de EquipoUni.</p>
+        PDF o foto, hasta 10 MB cada uno y 6 en total. Los ve solo el equipo de EquipoUni.</p>
         <p id="aviso-documentos" class="mensaje-form" style="min-height:0"></p>
+        <div id="documentos-actuales"></div>
       </fieldset>
 
       <p><button class="boton boton--grande" type="submit">Guardar cambios</button></p>

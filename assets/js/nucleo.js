@@ -20,6 +20,41 @@ window.EU = window.EU || {};
 
 EU.util = {
 
+  /* TELÉFONO Y RUT EN CUALQUIER FORMATO (pedido del cliente el 2-nov).
+     La gente escribe el teléfono con o sin +56, con espacios o guiones, y
+     el RUT con o sin puntos y guion. Se acepta todo, se revisa que tenga
+     sentido y se guarda siempre igual: el teléfono como +56 y 9 dígitos,
+     el RUT como 12345678-9. Devuelven { ok, valor } o { ok: false, error }. */
+  telefono: function (texto) {
+    var d = String(texto || '').replace(/\D/g, '');
+    if (d.length > 9 && d.indexOf('56') === 0) d = d.slice(2);
+    if (d.length !== 9) {
+      return { ok: false, error: 'El teléfono tiene que tener 9 dígitos, con o sin el +56 adelante. Por ejemplo: 9 1234 5678.' };
+    }
+    return { ok: true, valor: '+56' + d };
+  },
+
+  rut: function (texto) {
+    var limpio = String(texto || '').replace(/[^0-9kK]/g, '').toUpperCase();
+    var cuerpo = limpio.slice(0, -1), dv = limpio.slice(-1);
+    if (!/^\d{6,8}$/.test(cuerpo)) {
+      return { ok: false, error: 'Escribe el RUT completo, con su dígito verificador. Por ejemplo: 12.345.678-9.' };
+    }
+    /* Dígito verificador, módulo 11. Atrapa el error de tipeo más común:
+       un número cambiado o los dos últimos invertidos. */
+    var suma = 0, factor = 2;
+    for (var i = cuerpo.length - 1; i >= 0; i--) {
+      suma += Number(cuerpo.charAt(i)) * factor;
+      factor = factor === 7 ? 2 : factor + 1;
+    }
+    var r = 11 - (suma % 11);
+    var esperado = r === 11 ? '0' : (r === 10 ? 'K' : String(r));
+    if (dv !== esperado) {
+      return { ok: false, error: 'El dígito verificador no calza con ese RUT. Revisa que esté bien escrito.' };
+    }
+    return { ok: true, valor: cuerpo + '-' + dv };
+  },
+
   esc: function (s) {
     return String(s === undefined || s === null ? '' : s)
       .replace(/[&<>"]/g, function (c) {

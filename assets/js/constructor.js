@@ -46,24 +46,23 @@ EU.alEstarListo(function () {
     selComuna.appendChild(op);
   });
 
-  var selEstado = f.elements.estado;
-  Object.keys(EU.estados.oportunidadInfo).forEach(function (s) {
-    var op = document.createElement('option');
-    op.value = s; op.textContent = EU.estados.oportunidadInfo[s].etiqueta;
-    selEstado.appendChild(op);
-  });
-
-  /* El campo de fecha solo aparece cuando tiene sentido, y debajo del
-     selector se explica en una línea qué significa cada estado. */
-  function alCambiarEstado() {
-    var v = selEstado.value;
-    var campo = document.getElementById('campo-fecha-publicacion');
-    if (campo) campo.hidden = v !== 'programada';
-    var ayuda = document.getElementById('ayuda-estado');
-    var info = EU.estados.oportunidadInfo[v];
-    if (ayuda) ayuda.textContent = info && info.ayuda ? info.ayuda : '';
+  /* EL ESTADO LO DECIDEN LOS BOTONES, NO UN SELECTOR.
+     Hasta el 6-nov había un selector con los cinco estados y, abajo,
+     cuatro botones que le escribían encima su propio estado antes de
+     guardar. Elegir "Cancelada" en la lista y apretar el botón grande
+     dejaba la oportunidad publicada: le pasó al cliente en la reunión
+     del 2-nov. Además el campo de fecha solo aparecía al cambiar el
+     selector, así que "Programar" decía que faltaba una fecha que no
+     estaba a la vista. Ahora el estado actual solo se muestra, y cada
+     botón dice exactamente lo que hace. */
+  function pintarEstadoActual(estado) {
+    var zona = document.getElementById('estado-actual');
+    if (!zona) return;
+    var info = EU.estados.oportunidadInfo[estado];
+    zona.innerHTML = info
+      ? 'Estado actual: <strong>' + esc(info.etiqueta) + '</strong>. ' + esc(info.ayuda || '')
+      : 'Todavía no está guardada.';
   }
-  selEstado.addEventListener('change', alCambiarEstado);
 
   /* ---------- Bloque 3: perfil buscado con casillas dependientes ---------- */
 
@@ -243,8 +242,10 @@ EU.alEstarListo(function () {
       var c = f.querySelector('[name="subrubros"][value="' + s + '"]');
       if (c) c.checked = true;
     });
+    pintarEstadoActual(original.estado);
   } else {
     pintarSubrubros();
+    pintarEstadoActual('');
   }
   pintarPreguntas();
 
@@ -252,11 +253,12 @@ EU.alEstarListo(function () {
 
   var mensaje = document.getElementById('mensaje-form');
 
-  f.addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (!f.checkValidity()) { f.reportValidity(); return; }
-
-    /* Las mismas reglas del validador de datos, antes de "guardar". */
+  /* Las reglas antes de guardar, para TODOS los botones. Hasta el 6-nov
+     vivían dentro del "submit" del formulario, que ningún botón disparaba:
+     se podía publicar una feria que terminaba antes de empezar, o con el
+     cierre de postulación después del evento. */
+  function validar() {
+    if (!f.checkValidity()) { f.reportValidity(); return false; }
     var errores = [];
     if (f.elements.fechaInicio.value > f.elements.fechaTermino.value) {
       errores.push('La fecha de inicio es posterior a la de término.');
@@ -269,14 +271,17 @@ EU.alEstarListo(function () {
       var llenas = q.alternativas.filter(function (a) { return a.trim(); });
       if (llenas.length < 2) errores.push('La pregunta ' + (i + 1) + ' necesita al menos dos alternativas.');
     });
-
     if (errores.length) {
       mensaje.textContent = errores.join(' ');
       mensaje.className = 'mensaje-form mensaje-form--error';
-      return;
+      return false;
     }
-    guardar(f.elements.estado.value);
-  });
+    return true;
+  }
+
+  /* Apretar Enter en un campo no publica nada por accidente: se guarda
+     solo con los botones de abajo, que dicen qué hacen. */
+  f.addEventListener('submit', function (e) { e.preventDefault(); });
 
   /* ---------- Guardar contra el backend ---------- */
 
@@ -407,17 +412,71 @@ EU.alEstarListo(function () {
   }
 
   /* Botones de publicación: lo que pidió el cliente, un botón por acción
-     en vez de tener que entender un selector de estados. */
+     en vez de tener que entender un selector de estados.
+
+     El texto depende de si se crea o se edita (pedido del cliente el
+     2-nov): "Publicar ahora" solo al crear; al editar, "Publicar
+     cambios". Y "Ocultar del tablero" en vez de "Ocultar del sitio",
+     porque desde el 6-nov una oculta sí se abre con su enlace. */
   var barra = document.getElementById('acciones-publicacion');
   if (barra) {
+    var BOTONES = original
+      ? (original.estado === 'cancelada'
+          ? [['cancelada', 'Guardar cambios', 'boton--grande'],
+             ['publicada', 'Volver a publicar', 'boton--linea']]
+          : [['publicada', 'Publicar cambios', 'boton--grande'],
+             ['programada', 'Programar', 'boton--linea'],
+             ['borrador', 'Guardar como borrador', 'boton--linea'],
+             ['oculta', 'Ocultar del tablero', 'boton--linea']])
+      : [['publicada', 'Publicar ahora', 'boton--grande'],
+         ['programada', 'Programar', 'boton--linea'],
+         ['borrador', 'Guardar como borrador', 'boton--linea']];
+    barra.innerHTML = BOTONES.map(function (b) {
+      return '<button type="button" class="boton ' + b[2] + '" data-publicar="' + b[0] + '">' +
+        esc(b[1]) + '</button>';
+    }).join('');
+
     barra.addEventListener('click', function (e) {
       var b = e.target.closest('[data-publicar]');
       if (!b) return;
       e.preventDefault();
-      if (!f.checkValidity()) { f.reportValidity(); return; }
+      if (!validar()) return;
       var estado = b.getAttribute('data-publicar');
       f.elements.estado.value = estado;
       guardar(estado);
+    });
+  }
+
+  /* SUSPENDER EL EVENTO.
+     Antes no había forma de hacerlo: ningún botón llegaba a "cancelada".
+     Va aparte, con su motivo al lado, y pide confirmación diciendo a
+     cuántas personas les va a llegar el correo, porque ese correo no se
+     puede retirar. No pasa por validar(): suspender un evento nunca debe
+     quedar bloqueado por un campo que no tiene nada que ver. */
+  var zonaSuspender = document.getElementById('zona-suspender');
+  if (zonaSuspender && original && ['publicada', 'oculta', 'programada'].indexOf(original.estado) !== -1) {
+    zonaSuspender.hidden = false;
+    document.getElementById('suspender-evento').addEventListener('click', function () {
+      var motivo = f.elements.motivoCancelacion.value.trim();
+      if (!motivo) {
+        mensaje.className = 'mensaje-form mensaje-form--error';
+        mensaje.textContent = 'Escribe por qué se suspende antes de confirmar: es lo que les llega por correo.';
+        f.elements.motivoCancelacion.focus();
+        return;
+      }
+      var avisados = EU.datos.postulacionesA(original.id).filter(function (p) {
+        return p.estado === 'seleccionado' || p.estado === 'confirmado';
+      }).length;
+      var quienes = avisados
+        ? 'Le llegará un correo con el motivo a ' + avisados +
+          (avisados === 1 ? ' persona seleccionada o confirmada.' : ' personas seleccionadas o confirmadas.')
+        : 'Todavía no hay nadie seleccionado ni confirmado, así que no sale ningún correo.';
+      if (!window.confirm('Vas a suspender "' + original.nombre + '".\n\n' + quienes +
+          '\n\nEl correo no se puede retirar después. ¿Suspender el evento?')) {
+        return;
+      }
+      f.elements.estado.value = 'cancelada';
+      guardar('cancelada');
     });
   }
 });

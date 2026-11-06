@@ -17,7 +17,9 @@ EU.alEstarListo(function () {
   var id = EU.util.parametro('id');
   var o = id ? EU.repo.oportunidades.obtener(id) : null;
 
-  if (!o || !EU.estados.oportunidadInfo[o.estado] || !EU.estados.oportunidadInfo[o.estado].publica) {
+  /* Se abre si sale en el tablero o si se comparte por enlace (oculta). */
+  var infoEstado = o && EU.estados.oportunidadInfo[o.estado];
+  if (!o || !infoEstado || !(infoEstado.publica || infoEstado.porEnlace)) {
     contenedor.innerHTML =
       '<div class="sin-resultados"><h1>No encontramos esa oportunidad</h1>' +
       '<p>Puede que el enlace esté vencido o que la publicación se haya retirado.</p>' +
