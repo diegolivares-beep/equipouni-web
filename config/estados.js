@@ -114,12 +114,12 @@ EU.estados = {
   postulacionInfo: {
     postulado: {
       etiqueta: 'Postulado',
-      descripcion: 'Envió la postulación y todavía se está decidiendo.',
+      descripcion: 'Enviaste la postulación y la productora aún está decidiendo.',
       tono: 'espera'
     },
     seleccionado: {
       etiqueta: 'Seleccionado',
-      descripcion: 'Recibió un cupo y las instrucciones para pagar.',
+      descripcion: 'Recibiste un cupo y las instrucciones para pagar.',
       tono: 'bueno'
     },
     /* Sin este estado, "postulado" significaba a la vez "estamos
@@ -127,17 +127,17 @@ EU.estados = {
        correspondía avisarle. */
     no_seleccionado: {
       etiqueta: 'No seleccionado',
-      descripcion: 'Esta vez no quedó. Puede postular a otras oportunidades.',
+      descripcion: 'Esta vez no quedaste. Puedes postular a otras oportunidades.',
       tono: 'neutro'
     },
     confirmado: {
       etiqueta: 'Confirmado',
-      descripcion: 'Pago recibido y validado por EquipoUni.',
+      descripcion: 'Tu pago fue recibido y validado por EquipoUni.',
       tono: 'bueno'
     },
     renuncio: {
       etiqueta: 'Renunció',
-      descripcion: 'Desistió. Queda registrada la fecha y el estado anterior.',
+      descripcion: 'Desististe. Queda registrada la fecha y el estado anterior.',
       tono: 'neutro'
     }
   },

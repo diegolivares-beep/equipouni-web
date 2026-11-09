@@ -41,8 +41,7 @@ EU.marca = {
      decirlo, porque alguien podría postular a una feria que no existe. */
   esMaqueta: false,
   datosDeEjemplo: true,
-  avisoEjemplo: 'Las oportunidades publicadas son de ejemplo mientras cargamos las reales. ' +
-                'Las cuentas y las postulaciones sí funcionan y quedan guardadas.',
+  avisoEjemplo: 'Las oportunidades publicadas y sus fotos son referenciales mientras cargamos las reales.',
 
   contacto: {
     correo: 'contacto@equipouni.cl',
