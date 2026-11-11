@@ -17,7 +17,11 @@ EU.alEstarListo(function () {
   var destacadas = document.getElementById('oportunidades-destacadas');
   if (destacadas) {
     EU.repo.entonces(EU.repo.oportunidades.listar({}), function (lista) {
-      destacadas.innerHTML = lista.slice(0, 4).map(EU.ui.tarjetaOportunidad).join('');
+      destacadas.innerHTML = lista.length
+        ? lista.slice(0, 4).map(EU.ui.tarjetaOportunidad).join('')
+        : '<li class="sin-resultados"><h3>Pronto publicaremos las primeras convocatorias</h3>' +
+          '<p>Mientras tanto, crea tu ficha: cuando se abra una, solo tendrás que ' +
+          'responder sus preguntas.</p></li>';
     });
   }
 
